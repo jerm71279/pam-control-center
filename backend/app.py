@@ -100,8 +100,11 @@ def _load_imports_on_startup():
 _load_imports_on_startup()
 
 # ── Static Files (frontend) ─────────────────────────────────────────
+DOCS_DIR = Path(__file__).parent.parent / "docs"
 app.mount("/css", StaticFiles(directory=str(FRONTEND_DIR / "css")), name="css")
 app.mount("/js", StaticFiles(directory=str(FRONTEND_DIR / "js")), name="js")
+if DOCS_DIR.exists():
+    app.mount("/docs", StaticFiles(directory=str(DOCS_DIR), html=True), name="docs")
 
 
 @app.get("/")
