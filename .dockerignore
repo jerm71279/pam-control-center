@@ -4,7 +4,7 @@ __pycache__/
 .git/
 .gitignore
 .dockerignore
-render.yaml
 docker-compose.yml
+render.yaml
 README.md
-backend/imported_data/
+*.md

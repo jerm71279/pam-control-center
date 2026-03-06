@@ -36,11 +36,11 @@
   <button class="nav-link" onclick="showPage('waves',this)">
     <span class="nav-icon">&#x25E7;</span> Wave Execution
   </button>
+  <button class="nav-link" onclick="showPage('accounts',this)">
+    <span class="nav-icon">&#x25A8;</span> Account Explorer
+  </button>
   <button class="nav-link" onclick="showPage('gates',this)">
     <span class="nav-icon">&#x25CF;</span> Gate Tracker
-  </button>
-  <button class="nav-link" onclick="showPage('yellow',this)">
-    <span class="nav-icon">&#x26A0;</span> Yellow Checkpoints
   </button>
   <button class="nav-link" onclick="showPage('compare',this)">
     <span class="nav-icon">&#x2194;</span> Comparison
@@ -92,20 +92,6 @@
         <span class="badge badge-green" id="gatePassCount"></span>
       </div>
       <div id="gateStatusList" style="max-height:280px;overflow-y:auto;padding:10px;"></div>
-    </div>
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">Yellow Checkpoints</div>
-        <span class="badge badge-amber" id="yellowOpenCount"></span>
-      </div>
-      <div id="yellowStatusPanel"></div>
-    </div>
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">AI Predictive Insights</div>
-        <span class="badge badge-purple" id="predictionCount"></span>
-      </div>
-      <div id="predictionsPanel"></div>
     </div>
   </div>
 
@@ -164,6 +150,9 @@
     </div>
   </div>
 
+  <!-- ──── ACCOUNTS ──── -->
+  <div class="page" id="page-accounts"></div>
+
   <!-- ──── GATES ──── -->
   <div class="page" id="page-gates">
     <div class="page-header">
@@ -174,33 +163,6 @@
       <button class="reset-btn" onclick="resetGates()">Reset All Gates</button>
     </div>
     <div id="gateTimeline"></div>
-  </div>
-
-  <!-- ──── YELLOW CHECKPOINTS ──── -->
-  <div class="page" id="page-yellow">
-    <div class="page-header">
-      <div class="page-title">Yellow Checkpoints</div>
-      <div class="page-subtitle">AI Orchestrator — Cross-Phase Contextual Awareness</div>
-    </div>
-    <div id="yellowStats" class="stats-grid"></div>
-    <div class="panel" style="margin-bottom:16px">
-      <div class="panel-header">
-        <div class="panel-title">Phase Accumulation Thresholds</div>
-      </div>
-      <div id="yellowAccumulation"></div>
-    </div>
-    <div class="panel" style="margin-bottom:16px">
-      <div class="panel-header">
-        <div class="panel-title">State Machine — FIRE &rarr; CLASSIFY &rarr; NOTIFY &rarr; WINDOW &rarr; BOUNDARY &rarr; RESOLVE</div>
-        <button class="btn btn-sm" style="background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber)33" onclick="toggleStateMachine()">Show / Hide</button>
-      </div>
-      <div id="yellowStateMachine" style="display:none"></div>
-    </div>
-    <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center">
-      <button class="reset-btn" onclick="resetYellowCheckpoints()">Reset All Checkpoints</button>
-      <span style="font-size:0.6rem;color:var(--text-muted)">&#x25CF; Procedural = mandatory phase gate checks &nbsp;&nbsp;&#x25CF; AI Detected = orchestrator-identified conflicts, decisions, or forecasted errors</span>
-    </div>
-    <div id="yellowCheckpoints"></div>
   </div>
 
   <!-- ──── COMPARISON ──── -->
@@ -239,8 +201,8 @@
 <script src="/js/agents.js"></script>
 <script src="/js/waves.js"></script>
 <script src="/js/gates.js"></script>
-<script src="/js/yellow.js"></script>
 <script src="/js/compare.js"></script>
+<script src="/js/accounts.js"></script>
 <script src="/js/app.js"></script>
 
 </body>
