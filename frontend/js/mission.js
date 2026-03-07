@@ -140,6 +140,7 @@ async function renderMissionControl() {
 let _pfAnimating = false;
 let _pfAutoPlay = false;
 let _pfDecisionResolve = null;
+let _pfSpeed = 1; // 0.25 = slow, 1 = normal, 3 = fast
 
 const PF_AGENTS = [
   { num: '11', name: 'Src', phase: 'p1', purpose: 'Extracts raw data from source PAM' },
@@ -294,6 +295,11 @@ function _renderPredictiveFlow() {
           ${examples.map((e, i) => `<button class="pf-example-btn ${i === 0 ? 'active' : ''}" id="pf-ex-${e.id}" onclick="selectPredictiveExample(${e.id})">${e.label}</button>`).join('')}
           <button class="demo-btn" id="pfReplayBtn" onclick="replayPredictiveDemo()" style="font-size:0.5rem;padding:3px 8px;">&#x25B6; REPLAY</button>
           <button class="pf-autoplay ${_pfAutoPlay ? 'active' : ''}" onclick="togglePfAutoPlay()">Auto &#x25B6;</button>
+          <button class="pf-autoplay" id="pfPauseBtn" onclick="togglePfPause()">&#x23F8; PAUSE</button>
+          <div class="pf-speed-control">
+            <span class="pf-speed-label" id="pfSpeedLabel">1x</span>
+            <input type="range" class="pf-speed-dial" id="pfSpeedDial" min="0.25" max="3" step="0.25" value="1" oninput="setPfSpeed(this.value)">
+          </div>
         </div>
       </div>
 
@@ -347,9 +353,19 @@ function togglePfAutoPlay() {
   document.querySelector('.pf-autoplay').classList.toggle('active', _pfAutoPlay);
 }
 
+function setPfSpeed(val) {
+  _pfSpeed = parseFloat(val);
+  const label = document.getElementById('pfSpeedLabel');
+  if (label) label.textContent = _pfSpeed < 1 ? `${_pfSpeed}x` : `${_pfSpeed}x`;
+}
+
 function resetPredictiveFlow() {
   if (_pfDecisionResolve) { _pfDecisionResolve('cancel'); _pfDecisionResolve = null; }
   _pfAnimating = false;
+  _pfPaused = false;
+  if (_pfPauseResolve) { _pfPauseResolve(); _pfPauseResolve = null; }
+  const pauseBtn = document.getElementById('pfPauseBtn');
+  if (pauseBtn) { pauseBtn.textContent = '\u23F8 PAUSE'; pauseBtn.classList.remove('active'); }
   PF_AGENTS.forEach(a => {
     const el = document.getElementById(`pf-agent-${a.num}`);
     if (el) el.className = 'pf-node';
@@ -364,7 +380,27 @@ function resetPredictiveFlow() {
   });
 }
 
-function _pfSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function _pfSleep(ms) {
+  if (_pfPaused) return new Promise(r => { _pfPauseResolve = r; });
+  return new Promise(r => setTimeout(r, ms / _pfSpeed));
+}
+
+let _pfPaused = false;
+let _pfPauseResolve = null;
+
+function togglePfPause() {
+  _pfPaused = !_pfPaused;
+  const btn = document.getElementById('pfPauseBtn');
+  if (btn) {
+    btn.textContent = _pfPaused ? '\u25B6 PLAY' : '\u23F8 PAUSE';
+    btn.classList.toggle('active', _pfPaused);
+  }
+  if (!_pfPaused && _pfPauseResolve) {
+    const r = _pfPauseResolve;
+    _pfPauseResolve = null;
+    r();
+  }
+}
 
 function _pfSetCaption(id, text) {
   const el = document.getElementById(id);
@@ -383,7 +419,7 @@ function _pfClearCaption(id) {
 function _pfAwaitDecision(decisionId, question) {
   return new Promise(resolve => {
     if (_pfAutoPlay) {
-      setTimeout(() => resolve('yes'), 1500);
+      setTimeout(() => resolve('yes'), 1500 / _pfSpeed);
       return;
     }
     _pfDecisionResolve = resolve;
