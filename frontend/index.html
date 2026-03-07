@@ -48,6 +48,9 @@
   <button class="nav-link" onclick="showPage('compare',this)">
     <span class="nav-icon">&#x2194;</span> Comparison
   </button>
+  <button class="nav-link" onclick="showPage('mcp',this)">
+    <span class="nav-icon">&#x2B21;</span> MCP Servers
+  </button>
   <button class="nav-link" onclick="showPage('disclaimer',this)">
     <span class="nav-icon">&#x26A0;</span> Status & Info
   </button>
@@ -218,6 +221,15 @@
     <div id="comparisonContent"></div>
   </div>
 
+  <!-- ──── MCP SERVERS ──── -->
+  <div class="page" id="page-mcp">
+    <div class="page-header">
+      <div class="page-title">MCP Servers</div>
+      <div class="page-subtitle">Model Context Protocol — AI Council Conditions 2, 3, 4</div>
+    </div>
+    <div id="mcpContent"></div>
+  </div>
+
   <!-- ──── DISCLAIMER ──── -->
   <div class="page" id="page-disclaimer">
     <div class="page-header">
@@ -248,6 +260,7 @@
 <script src="/js/compare.js"></script>
 <script src="/js/yellow.js"></script>
 <script src="/js/accounts.js"></script>
+<script src="/js/mcp.js"></script>
 <script src="/js/app.js"></script>
 
 </body>

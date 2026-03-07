@@ -21,6 +21,7 @@ function showPage(pageId, btn) {
     case 'gates': renderGateTracker(); break;
     case 'yellow': renderYellowCheckpoints(); break;
     case 'compare': renderComparison(); break;
+    case 'mcp': renderMcpDashboard(); break;
     case 'disclaimer': renderDisclaimer(); break;
   }
 }
