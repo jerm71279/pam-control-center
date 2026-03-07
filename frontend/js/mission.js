@@ -171,6 +171,7 @@ function _getPredictiveExamples() {
   return [
     {
       id: 1, label: 'Permission Escalation', severity: 'high', category: 'security',
+      condition: '47 accounts with ManageSafe-only permissions are being mapped to Owner role — a privilege escalation from read-only safe admin to full data access',
       sourceAgents: ['03'],
       checkpoints: [{ id: 'yc-a02', label: '47 ManageSafe→Owner escalations', phase: 'P1' }],
       crossRefs: [{ from: 'yc-a02', to: '14', reason: 'Onboarding Factory uses same mapping table' }],
@@ -181,14 +182,23 @@ function _getPredictiveExamples() {
       recommendation: 'Update Agent 14 mapping table + apply compensating control',
       feedbackAgent: '14',
       decisions: {
-        d1: { q: 'Threshold exceeded?', yesText: '47 escalations > 10 threshold — checkpoint fired', noText: 'Below threshold — finding logged, no checkpoint' },
-        d2: { q: 'Cross-system impact?', yesText: 'Agent 14 uses same mapping table — impact confirmed', noText: 'Isolated to Agent 03 only — logged as advisory' },
-        d3: { q: 'Compounding risk?', yesText: 'Pattern compounds — future onboarding inherits escalation', noText: 'No compounding — checkpoint resolved' },
-        d4: { q: 'Remediate?', yesText: 'Update mapping table — Agent 14 re-runs with fix', noText: 'Risk accepted — prediction stays active in monitoring' },
+        d1: { q: 'Threshold exceeded?',
+          yesText: '47 escalations found — exceeds 10-escalation threshold, so a yellow checkpoint fires',
+          noText: 'Escalation count is below threshold — logged as informational, no checkpoint fires' },
+        d2: { q: 'Cross-system impact?',
+          yesText: 'Agent 14 (Onboarding Factory) uses the same permission mapping table — new accounts will inherit the escalation',
+          noText: 'Escalation is isolated to Agent 03 — no other agents reference this mapping, logged as advisory' },
+        d3: { q: 'Compounding risk?',
+          yesText: 'Every new account onboarded in P4-P5 will inherit Owner instead of View — escalation grows with each wave',
+          noText: 'Existing escalation does not propagate — checkpoint resolves with a one-time fix' },
+        d4: { q: 'Remediate or accept risk?',
+          yesText: 'Fix the mapping table now — Agent 14 re-runs onboarding pipeline with corrected permissions',
+          noText: 'Accept the risk — escalated accounts are documented but not corrected; prediction stays active' },
       },
     },
     {
       id: 2, label: 'Wave 3 NHI Overrun', severity: 'critical', category: 'bottleneck',
+      condition: 'Source extraction latency measured at 182 seconds per account — 52% above the 120-second benchmark, with 554 NHI accounts queued for Wave 3',
       sourceAgents: ['11', '01'],
       checkpoints: [{ id: 'yc-a01', label: 'Extraction latency 182s vs 120s benchmark', phase: 'P1' }],
       crossRefs: [
@@ -203,14 +213,23 @@ function _getPredictiveExamples() {
       recommendation: 'Pre-split Wave 3 into sub-waves (3a: 280, 3b: 274 NHIs)',
       feedbackAgent: '04',
       decisions: {
-        d1: { q: 'Threshold exceeded?', yesText: '182s extraction > 120s benchmark — checkpoint fired', noText: 'Within benchmark — no checkpoint' },
-        d2: { q: 'Cross-system impact?', yesText: '3 agents affected — Agent 09, 12, 10 all reference this data', noText: 'No cross-agent dependencies — advisory only' },
-        d3: { q: 'Compounding risk?', yesText: '554 NHIs × 182s = 4.2hr — exceeds 12hr window', noText: 'Volume within capacity — checkpoint resolved' },
-        d4: { q: 'Remediate?', yesText: 'Pre-split Wave 3 — Agent 04 re-plans with sub-waves', noText: 'Risk accepted — maintain current wave plan' },
+        d1: { q: 'Threshold exceeded?',
+          yesText: '182s per account exceeds the 120s benchmark — checkpoint fires flagging extraction bottleneck',
+          noText: 'Latency is within acceptable benchmark — no performance concern, no checkpoint fires' },
+        d2: { q: 'Cross-system impact?',
+          yesText: '3 downstream agents depend on this data — Agent 09 (dependency maps), Agent 12 (NHI classification), Agent 10 (staging) are all affected',
+          noText: 'No other agents depend on extraction timing — latency is a local concern only' },
+        d3: { q: 'Compounding risk?',
+          yesText: '554 NHIs at 182s each = 28 hours extraction — Wave 3 will overrun the 12-hour maintenance window by 2+ hours',
+          noText: 'Volume is small enough that the latency does not breach the maintenance window — checkpoint resolved' },
+        d4: { q: 'Remediate or accept risk?',
+          yesText: 'Split Wave 3 into two sub-waves (3a: 280, 3b: 274) — Agent 04 re-plans ETL scheduling to fit within window',
+          noText: 'Accept the overrun risk — maintain single Wave 3 and request an extended maintenance window' },
       },
     },
     {
       id: 3, label: 'Rate Limit Escalation', severity: 'critical', category: 'capacity',
+      condition: 'API call failure rate of 18% at 100 req/min during P1 discovery, and 16% failure at 500 req/min during P6 parallel-run — two independent signals from different phases',
       sourceAgents: ['11', '15'],
       checkpoints: [
         { id: 'yc-b01', label: '18% failure at 100 req/min', phase: 'P1' },
@@ -227,10 +246,18 @@ function _getPredictiveExamples() {
       recommendation: 'Request 1,000 req/min tier + implement request coalescing',
       feedbackAgent: '15',
       decisions: {
-        d1: { q: 'Threshold exceeded?', yesText: '18% API failure rate — TWO checkpoints fired across P1 and P6', noText: 'Error rate acceptable — no checkpoint' },
-        d2: { q: 'Cross-system impact?', yesText: 'Agent 04 rate limiter + Agent 05 heartbeat timing both affected', noText: 'Isolated to source adapter — advisory only' },
-        d3: { q: 'Compounding risk?', yesText: 'P1 rate (18%) + P6 rate (16%) → P7 projection: 10% headroom', noText: 'Rates stable — no escalation trend' },
-        d4: { q: 'Remediate?', yesText: 'Upgrade rate tier — Agent 15 re-runs capacity validation', noText: 'Risk accepted — monitor at current tier' },
+        d1: { q: 'Threshold exceeded?',
+          yesText: '18% failure rate exceeds 5% threshold — TWO checkpoints fire, one in P1 and one in P6, flagging a cross-phase pattern',
+          noText: 'Failure rate is within acceptable range — API errors are transient and do not warrant a checkpoint' },
+        d2: { q: 'Cross-system impact?',
+          yesText: 'Agent 04 (ETL rate limiter) and Agent 05 (heartbeat timing) are both constrained by the same API ceiling',
+          noText: 'Rate limits only affect the source adapter — no downstream agents are impacted' },
+        d3: { q: 'Compounding risk?',
+          yesText: 'P1 rate (18%) + P6 rate (16%) project to P7: only 10% headroom at 500 req/min ceiling — any traffic burst causes cascading 429 errors',
+          noText: 'Failure rates are stable and not trending upward — no escalation curve detected' },
+        d4: { q: 'Remediate or accept risk?',
+          yesText: 'Request 1,000 req/min tier upgrade + implement request coalescing — Agent 15 re-validates capacity',
+          noText: 'Accept 10% headroom — monitor rate limits and trigger manual escalation if 429 errors spike' },
       },
     },
   ];
@@ -365,17 +392,27 @@ function _pfAwaitDecision(decisionId, question) {
     const waitEl = document.getElementById(`pf-d-wait-${decisionId}`);
     if (yesBtn) { yesBtn.classList.add('pf-visible'); yesBtn.onclick = () => { _pfDecisionResolve = null; resolve('yes'); }; }
     if (noBtn) { noBtn.classList.add('pf-visible'); noBtn.onclick = () => { _pfDecisionResolve = null; resolve('no'); }; }
+    const yesDesc = document.getElementById(`pf-d-yesdesc-${decisionId}`);
+    const noDesc = document.getElementById(`pf-d-nodesc-${decisionId}`);
+    if (yesDesc) yesDesc.style.opacity = '1';
+    if (noDesc) noDesc.style.opacity = '1';
     if (waitEl) waitEl.style.display = 'block';
   });
 }
 
-function _pfBuildDecision(id, question) {
+function _pfBuildDecision(id, decision) {
   return `<div class="pf-decision-wrap">
     <div class="pf-decision" id="pf-diamond-${id}"><div class="pf-decision-label">?</div></div>
-    <div style="font-size:0.5rem;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px;">${question}</div>
+    <div style="font-size:0.5rem;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px;">${decision.q}</div>
     <div class="pf-decide-btns">
-      <button class="pf-decide-btn pf-yes-btn" id="pf-d-yes-${id}">YES</button>
-      <button class="pf-decide-btn pf-no-btn" id="pf-d-no-${id}">NO</button>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <button class="pf-decide-btn pf-yes-btn" id="pf-d-yes-${id}">YES</button>
+        <div style="font-size:0.42rem;color:var(--green);max-width:140px;text-align:center;line-height:1.3;opacity:0;" id="pf-d-yesdesc-${id}">${decision.yesText}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <button class="pf-decide-btn pf-no-btn" id="pf-d-no-${id}">NO</button>
+        <div style="font-size:0.42rem;color:var(--text-muted);max-width:140px;text-align:center;line-height:1.3;opacity:0;" id="pf-d-nodesc-${id}">${decision.noText}</div>
+      </div>
     </div>
     <div class="pf-waiting" id="pf-d-wait-${id}" style="display:none;">awaiting decision...</div>
   </div>`;
@@ -405,13 +442,13 @@ async function playPredictiveDemo(exampleNum) {
     const el = document.getElementById(`pf-agent-${num}`);
     if (el) el.classList.add('pf-active');
   }
-  _pfSetCaption('pfCaption1', `Agent ${ex.sourceAgents.join(' + Agent ')} detects condition...`);
+  _pfSetCaption('pfCaption1', `Agent ${ex.sourceAgents.join(' + Agent ')} detects: ${ex.condition}`);
   await _pfSleep(1500);
 
   // Step 3: Decision 1 — Threshold
   const bus = document.getElementById('pfCheckpointBus');
   const engine = document.getElementById('pfDecisionEngine');
-  engine.innerHTML = _pfBuildDecision('d1', ex.decisions.d1.q);
+  engine.innerHTML = _pfBuildDecision('d1', ex.decisions.d1);
   const d1Diamond = document.getElementById('pf-diamond-d1');
   if (d1Diamond) d1Diamond.classList.add('pf-active-amber');
 
@@ -455,7 +492,7 @@ async function playPredictiveDemo(exampleNum) {
   await _pfSleep(2000);
 
   // Step 6: Decision 2 — Cross-system impact
-  engine.innerHTML += _pfBuildDecision('d2', ex.decisions.d2.q);
+  engine.innerHTML += _pfBuildDecision('d2', ex.decisions.d2);
   const d2Diamond = document.getElementById('pf-diamond-d2');
   if (d2Diamond) d2Diamond.classList.add('pf-active-amber');
 
@@ -479,7 +516,7 @@ async function playPredictiveDemo(exampleNum) {
   await _pfSleep(1200);
 
   // Step 7: Decision 3 — Compounding risk
-  engine.innerHTML += _pfBuildDecision('d3', ex.decisions.d3.q);
+  engine.innerHTML += _pfBuildDecision('d3', ex.decisions.d3);
   const d3Diamond = document.getElementById('pf-diamond-d3');
   if (d3Diamond) d3Diamond.classList.add('pf-active-amber');
 
@@ -532,7 +569,7 @@ async function playPredictiveDemo(exampleNum) {
   // Step 10: Decision 4 — Remediate
   _pfSetCaption('pfCaption3', '');
   const feedback = document.getElementById('pfFeedback');
-  feedback.innerHTML = _pfBuildDecision('d4', ex.decisions.d4.q);
+  feedback.innerHTML = _pfBuildDecision('d4', ex.decisions.d4);
   const d4Diamond = document.getElementById('pf-diamond-d4');
   if (d4Diamond) d4Diamond.classList.add('pf-active-amber');
 
