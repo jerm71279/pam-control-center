@@ -22,6 +22,7 @@ function showPage(pageId, btn) {
     case 'yellow': renderYellowCheckpoints(); break;
     case 'compare': renderComparison(); break;
     case 'mcp': renderMcpDashboard(); break;
+    case 'guide': renderGuide(); break;
     case 'disclaimer': renderDisclaimer(); break;
   }
 }

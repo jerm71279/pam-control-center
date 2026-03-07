@@ -993,6 +993,58 @@ body {
   100% { left: 100%; }
 }
 
+/* ── Predictive Intelligence Flow ─────────────────────────────── */
+.pf-container { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-top:16px; }
+.pf-header { padding:14px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; border-bottom:1px solid var(--border); }
+.pf-header-title { font-weight:700; font-size:0.78rem; color:var(--text-bright); }
+.pf-controls { display:flex; gap:6px; align-items:center; }
+.pf-example-btn { font-family:var(--font-mono); font-size:0.52rem; padding:4px 10px; border:1px solid var(--border); background:var(--bg-surface); color:var(--text-muted); border-radius:var(--radius); cursor:pointer; transition:all 0.3s ease; }
+.pf-example-btn:hover { border-color:var(--purple); color:var(--purple); }
+.pf-example-btn.active { border-color:var(--purple); color:var(--purple); background:var(--purple-dim); }
+.pf-layer { padding:12px 16px; border-bottom:1px solid var(--border); }
+.pf-layer:last-child { border-bottom:none; }
+.pf-layer-label { font-family:var(--font-mono); font-size:0.46rem; font-weight:700; letter-spacing:1.5px; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase; }
+.pf-agents { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+.pf-agent-group { display:flex; flex-direction:column; align-items:center; gap:4px; margin:0 6px; }
+.pf-agent-group-label { font-size:0.42rem; color:var(--text-muted); font-family:var(--font-mono); letter-spacing:1px; }
+.pf-node { padding:5px 8px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-surface); font-size:0.55rem; font-family:var(--font-mono); color:var(--text-muted); transition:all 0.5s ease; text-align:center; min-width:44px; cursor:default; position:relative; }
+.pf-node:hover .pf-tooltip { opacity:1; visibility:visible; }
+.pf-tooltip { position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%); background:var(--bg-card); border:1px solid var(--border); border-radius:4px; padding:4px 8px; font-size:0.48rem; color:var(--text-standard); white-space:nowrap; opacity:0; visibility:hidden; transition:opacity 0.2s; pointer-events:none; z-index:10; }
+.pf-node.pf-active { border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 16px var(--cyan-dim); transform:scale(1.1); }
+.pf-node.pf-active-amber { border-color:var(--amber); color:var(--amber); box-shadow:0 0 16px var(--amber-dim); transform:scale(1.1); }
+.pf-node.pf-active-purple { border-color:var(--purple); color:var(--purple); box-shadow:0 0 16px var(--purple-dim); transform:scale(1.1); }
+.pf-node.pf-active-red { border-color:var(--red); color:var(--red); box-shadow:0 0 12px var(--red-dim); }
+.pf-node.pf-done { border-color:var(--green); color:var(--green); background:var(--green-dim); }
+.pf-node.pf-crossref { border-color:var(--teal); color:var(--teal); box-shadow:0 0 12px var(--teal-dim); }
+.pf-bus { display:flex; align-items:center; gap:12px; justify-content:center; min-height:36px; flex-wrap:wrap; }
+.pf-decision-wrap { display:inline-flex; flex-direction:column; align-items:center; gap:6px; }
+.pf-decision { width:28px; height:28px; border:2px solid var(--border); transform:rotate(45deg); display:inline-flex; align-items:center; justify-content:center; transition:all 0.5s ease; }
+.pf-decision.pf-active-amber { border-color:var(--amber); box-shadow:0 0 12px var(--amber-dim); animation:pfDecisionPulse 1.5s ease-in-out infinite; }
+.pf-decision.pf-done { border-color:var(--green); background:var(--green-dim); animation:none; }
+.pf-decision.pf-done-no { border-color:var(--text-muted); background:var(--bg-surface); animation:none; opacity:0.5; }
+.pf-decision-label { transform:rotate(-45deg); font-size:0.36rem; font-weight:700; font-family:var(--font-mono); color:inherit; }
+.pf-decide-btns { display:flex; gap:4px; }
+.pf-decide-btn { font-family:var(--font-mono); font-size:0.5rem; font-weight:700; padding:3px 8px; border-radius:3px; cursor:pointer; transition:all 0.2s ease; border:1px solid; opacity:0; transform:scale(0.8); pointer-events:none; }
+.pf-decide-btn.pf-visible { opacity:1; transform:scale(1); pointer-events:auto; }
+.pf-decide-btn.pf-yes-btn { border-color:var(--green); color:var(--green); background:var(--green-dim); }
+.pf-decide-btn.pf-yes-btn:hover { background:var(--green); color:#000; }
+.pf-decide-btn.pf-no-btn { border-color:var(--text-muted); color:var(--text-muted); background:var(--bg-surface); }
+.pf-decide-btn.pf-no-btn:hover { background:var(--red-dim); color:var(--red); border-color:var(--red); }
+.pf-decide-btn.pf-chosen { opacity:1; transform:scale(1.1); }
+.pf-decide-btn.pf-unchosen { opacity:0.3; transform:scale(0.8); pointer-events:none; }
+.pf-waiting { font-size:0.45rem; color:var(--amber); font-family:var(--font-mono); animation:pfBlink 1.5s ease-in-out infinite; }
+.pf-alt-path { font-size:0.5rem; color:var(--text-muted); font-style:italic; opacity:0; transition:opacity 0.5s ease; }
+.pf-alt-path.pf-visible { opacity:0.6; }
+.pf-caption { font-size:0.6rem; color:var(--text-standard); text-align:center; padding:8px 16px; min-height:2em; transition:opacity 0.4s ease; opacity:0; line-height:1.5; }
+.pf-caption.pf-visible { opacity:1; }
+.pf-autoplay { font-family:var(--font-mono); font-size:0.5rem; padding:3px 8px; border:1px solid var(--border); background:var(--bg-surface); color:var(--text-muted); border-radius:3px; cursor:pointer; transition:all 0.2s ease; }
+.pf-autoplay:hover { border-color:var(--teal); color:var(--teal); }
+.pf-autoplay.active { border-color:var(--teal); color:var(--teal); background:var(--teal-dim); }
+.pf-feedback-arrow { color:var(--teal); font-size:0.7rem; opacity:0; transition:opacity 0.6s ease; }
+.pf-feedback-arrow.pf-visible { opacity:1; }
+@keyframes pfDecisionPulse { 0%,100%{box-shadow:0 0 8px var(--amber-dim)} 50%{box-shadow:0 0 24px var(--amber-dim)} }
+@keyframes pfBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar { width: 180px; }
