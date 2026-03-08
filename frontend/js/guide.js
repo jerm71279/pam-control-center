@@ -1,5 +1,5 @@
 /**
- * Guide & FAQ page — comprehensive reference for the PAM Migration Control Center.
+ * Guide & FAQ page — comprehensive reference for the SHIFT Migration Control Center.
  */
 
 function renderGuide() {
@@ -7,8 +7,8 @@ function renderGuide() {
   if (!el) return;
 
   el.innerHTML = _guideSection('What Is This Control Center?', `
-    <p><strong>Executive summary:</strong> The PAM Migration Control Center is a real-time operational dashboard for managing a large-scale Privileged Access Management migration. It provides visibility into every phase, agent, gate, and risk factor across an 80-week (Option A) or 50-week (Option B) migration timeline.</p>
-    <p><strong>Technical overview:</strong> The frontend is a single-page app (Vanilla JS, no frameworks) served by a FastAPI backend. All data flows through the 15-agent AI orchestrator. Each page visualizes a different slice of the orchestrator's output — from high-level phase timelines down to individual account-level ETL results. The two MCP servers (pam-migration-mcp and pam-dx-portal) provide Model Context Protocol integration for AI-assisted operations.</p>
+    <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing a large-scale Privileged Access Management migration. It provides visibility into every phase, agent, gate, and risk factor across an 80-week (Option A) or 50-week (Option B) migration timeline.</p>
+    <p><strong>Technical overview:</strong> The frontend is a single-page app (Vanilla JS, no frameworks) served by a FastAPI backend. All data flows through the 15-agent AI orchestrator. Each page visualizes a different slice of the orchestrator's output — from high-level phase timelines down to individual account-level ETL results. The two MCP servers (pam-migration-mcp and SHIFT Portal) provide Model Context Protocol integration for AI-assisted operations.</p>
     <p>This control center is a <strong>demonstration/proposal tool</strong> — it uses mock data to show how the migration would be managed. In production, the backend connects to live CyberArk PVWA and target platform APIs.</p>
   `) +
 
