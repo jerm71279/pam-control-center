@@ -10,6 +10,7 @@ let _jit = {
 };
 
 let _labTab = 'jit';
+let _connView = 'category';
 let _oracleStep = 0;
 
 // ── Oracle DB Workflow data ───────────────────────────────
@@ -621,7 +622,313 @@ function _oracleRunRotation() {
   }, 3200);
 }
 
-function renderConnectorComparison() { /* Task 4 */ }
+function renderConnectorComparison() {
+  const el = document.getElementById('lab-panel-connectors');
+  if (!el) return;
+
+  el.innerHTML = `
+    <div class="panel-header">
+      <span class="panel-title">&#x1F517; Connector Architecture &mdash; Legacy CyberArk vs Target PAM</span>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button id="conn-tab-category" onclick="_connSwitchView('category')"></button>
+      <button id="conn-tab-table" onclick="_connSwitchView('table')"></button>
+    </div>
+
+    <div id="conn-view-category">
+
+      <!-- Group 1: Password Rotation -->
+      <div class="panel" style="margin-bottom:12px;">
+        <div class="panel-title">Password Rotation &mdash; CPM vs RPC vs Native</div>
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Legacy CyberArk CPM</th>
+              <th>Delinea (RPC)</th>
+              <th>Privilege Cloud CPM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Component</td>
+              <td>CPM &mdash; Central Policy Manager</td>
+              <td>RPC &mdash; Remote Password Changer</td>
+              <td>CPM &mdash; same component</td>
+            </tr>
+            <tr>
+              <td>Plugin format</td>
+              <td><code>.ini</code> platform file + <code>Process.ini</code></td>
+              <td class="risk-medium">PowerShell script per Secret Template</td>
+              <td class="risk-low"><code>.ini</code> &mdash; direct carry-over &#x2713;</td>
+            </tr>
+            <tr>
+              <td>Oracle DB support</td>
+              <td>OracleDB.ini built-in</td>
+              <td class="risk-medium">Custom PowerShell script required</td>
+              <td class="risk-low">OracleDB.ini direct carry-over &#x2713;</td>
+            </tr>
+            <tr>
+              <td>Rotation trigger</td>
+              <td>Schedule + session check-in</td>
+              <td>Schedule + heartbeat</td>
+              <td>Schedule + session check-in</td>
+            </tr>
+            <tr>
+              <td>Migration path</td>
+              <td>Source (paused during FREEZE)</td>
+              <td class="risk-medium">Rebuild per template</td>
+              <td class="risk-low">Direct carry-over</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Group 2: Session Management -->
+      <div class="panel" style="margin-bottom:12px;">
+        <div class="panel-title">Session Management &mdash; PSM vs StrongDM vs Cloud PSM</div>
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Legacy PSM</th>
+              <th>Delinea + StrongDM</th>
+              <th>Privilege Cloud PSM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Component</td>
+              <td>PSM &mdash; Privileged Session Manager</td>
+              <td>StrongDM gateway proxy</td>
+              <td>PSM for Cloud</td>
+            </tr>
+            <tr>
+              <td>Protocol support</td>
+              <td>RDP, SSH, DB via PSM for DBs</td>
+              <td>SSH, RDP, DB, K8s, Web</td>
+              <td>RDP, SSH, DB</td>
+            </tr>
+            <tr>
+              <td>Recording storage</td>
+              <td>Vault-side (on-prem)</td>
+              <td>StrongDM cloud</td>
+              <td>CyberArk cloud</td>
+            </tr>
+            <tr>
+              <td>PSM recording migration</td>
+              <td>N/A</td>
+              <td class="risk-high">Cannot migrate &#x2717;</td>
+              <td>Can migrate &#x2713;</td>
+            </tr>
+            <tr>
+              <td>Session isolation</td>
+              <td>PVWA proxy</td>
+              <td>StrongDM gateway</td>
+              <td>PVWA cloud proxy</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Group 3: Credential Retrieval -->
+      <div class="panel" style="margin-bottom:12px;">
+        <div class="panel-title">Credential Retrieval &mdash; CCP / AAM vs REST</div>
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Legacy CCP / AAM</th>
+              <th>Delinea REST</th>
+              <th>Privilege Cloud</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Component</td>
+              <td>CCP Agent + AAM SDK</td>
+              <td>OAuth2 REST API</td>
+              <td>CCP/AAM (similar pattern)</td>
+            </tr>
+            <tr>
+              <td>App auth model</td>
+              <td>Agent-based certificate</td>
+              <td>Client credentials grant</td>
+              <td>OAuth2 similar</td>
+            </tr>
+            <tr>
+              <td>Secret endpoint</td>
+              <td><code>POST /Accounts/{id}/Password/Retrieve</code></td>
+              <td><code>GET /api/v1/secrets/{id}</code></td>
+              <td><code>POST /Accounts/{id}/Password/Retrieve</code></td>
+            </tr>
+            <tr>
+              <td>Code change required</td>
+              <td>N/A (source)</td>
+              <td class="risk-high">Full rewrite</td>
+              <td class="risk-low">Minor &mdash; same URL pattern</td>
+            </tr>
+            <tr>
+              <td>Agent deployment</td>
+              <td>CCP agent on app server</td>
+              <td>None required</td>
+              <td>CCP agent (optional)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Group 4: Secret Schema -->
+      <div class="panel" style="margin-bottom:12px;">
+        <div class="panel-title">Secret Object &mdash; CyberArk Account vs Target</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
+
+          <!-- Left: CyberArk Account Object -->
+          <div style="border:1px solid var(--blue);border-radius:6px;overflow:hidden;">
+            <div style="background:var(--blue-dim);padding:6px 10px;font-size:0.6rem;font-family:var(--font-mono);color:var(--blue);letter-spacing:1px;">CYBERARK ACCOUNT OBJECT</div>
+            <pre style="background:var(--bg-page);padding:12px;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-standard);margin:0;overflow-x:auto;">{
+  "name": "sys-ORCL-PROD-db01",
+  "address": "db-server-01",
+  "userName": "sys",
+  "platformId": "OracleDB",
+  "safeName": "DB-Production",
+  "platformAccountProperties": {
+    "Port": "1521",
+    "Database": "ORCL"
+  },
+  "secretType": "password"
+}</pre>
+          </div>
+
+          <!-- Right: two stacked targets -->
+          <div>
+            <!-- Privilege Cloud -->
+            <div style="border:1px solid var(--green);border-radius:6px;overflow:hidden;">
+              <div style="background:var(--green-dim);padding:6px 10px;font-size:0.6rem;font-family:var(--font-mono);color:var(--green);letter-spacing:1px;">PRIVILEGE CLOUD TARGET (MINIMAL DELTA)</div>
+              <pre style="background:var(--bg-page);padding:12px;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-standard);margin:0;overflow-x:auto;">{
+  "name": "sys-ORCL-PROD-db01",  // identical
+  "address": "db-server-01",     // identical
+  "userName": "sys",             // identical
+  "platformId": "OracleDB",      // identical
+  "safeName": "DB-Production",   // identical &mdash; same schema
+  "platformAccountProperties": {
+    "Port": "1521",
+    "Database": "ORCL"
+  }
+}</pre>
+            </div>
+
+            <!-- Delinea -->
+            <div style="border:1px solid var(--amber);border-radius:6px;overflow:hidden;margin-top:12px;">
+              <div style="background:var(--amber-dim);padding:6px 10px;font-size:0.6rem;font-family:var(--font-mono);color:var(--amber);letter-spacing:1px;">DELINEA SECRET SERVER TARGET (STRUCTURAL DELTA)</div>
+              <pre style="background:var(--bg-page);padding:12px;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-standard);margin:0;overflow-x:auto;">{
+  "name": "sys-ORCL-PROD-db01",
+  "folderId": 142,               // &larr; was safeName
+  "secretTemplateId": 6003,      // &larr; was platformId
+  "items": [
+    { "fieldName": "Username",  "itemValue": "sys" },
+    { "fieldName": "Password",  "itemValue": "&#x2022;&#x2022;&#x2022;&#x2022;" },
+    { "fieldName": "Server",    "itemValue": "db-server-01" },
+    { "fieldName": "Port",      "itemValue": "1521" },
+    { "fieldName": "Database",  "itemValue": "ORCL" }
+  ]
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout amber" style="margin-top:16px;">
+          <div class="callout-title">SHIFT ETL Transform</div>
+          Agent 04 reads the CyberArk Account Object, maps platformId &rarr; templateId using agent_config.json, flattens platformAccountProperties into Secret Template field items, and resolves safeName &rarr; folderId from the pre-built folder map (Agent 13 + Agent 03).
+        </div>
+      </div>
+
+    </div><!-- /#conn-view-category -->
+
+    <div id="conn-view-table" style="display:none;">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Legacy</th>
+            <th>Legacy Mechanism</th>
+            <th>Delinea Target</th>
+            <th>Privilege Cloud Target</th>
+            <th>Migration Effort</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Password Rotation</td>
+            <td>CPM</td>
+            <td><code>.ini</code> platform plugin + Process.ini</td>
+            <td>RPC PowerShell script per template</td>
+            <td>CPM <code>.ini</code> &mdash; direct carry-over</td>
+            <td><span class="risk-high">High (Delinea)</span> / <span class="risk-low">Low (PCloud)</span></td>
+          </tr>
+          <tr>
+            <td>Session Management</td>
+            <td>PSM</td>
+            <td>PVWA session proxy</td>
+            <td>StrongDM gateway</td>
+            <td>PSM for Cloud</td>
+            <td class="risk-medium">Medium</td>
+          </tr>
+          <tr>
+            <td>Credential Retrieval</td>
+            <td>CCP / AAM</td>
+            <td>Agent + certificate auth</td>
+            <td>OAuth2 REST API</td>
+            <td>CCP / AAM OAuth2</td>
+            <td><span class="risk-high">High (Delinea)</span> / <span class="risk-low">Low (PCloud)</span></td>
+          </tr>
+          <tr>
+            <td>Dual-Control Workflow</td>
+            <td>PVWA Portal</td>
+            <td>Request + dual approval forms</td>
+            <td>Native workflow + webhooks</td>
+            <td>PVWA workflow engine</td>
+            <td class="risk-medium">Medium</td>
+          </tr>
+          <tr>
+            <td>SIEM Integration</td>
+            <td>SIEM Connector</td>
+            <td>Syslog + LEEF format</td>
+            <td>Syslog / webhook</td>
+            <td>Syslog / webhook</td>
+            <td class="risk-low">Low</td>
+          </tr>
+          <tr>
+            <td>IDP Integration</td>
+            <td>LDAP/SAML</td>
+            <td>PVWA + LDAP bind</td>
+            <td>SSO + SCIM</td>
+            <td>SSO + SCIM</td>
+            <td class="risk-medium">Medium</td>
+          </tr>
+        </tbody>
+      </table>
+    </div><!-- /#conn-view-table -->
+  `;
+
+  _connSwitchView(_connView);
+}
+
+function _connSwitchView(view) {
+  _connView = view;
+  const catPanel   = document.getElementById('conn-view-category');
+  const tablePanel = document.getElementById('conn-view-table');
+  const catBtn     = document.getElementById('conn-tab-category');
+  const tableBtn   = document.getElementById('conn-tab-table');
+  if (catPanel)   catPanel.style.display   = (view === 'category') ? 'block' : 'none';
+  if (tablePanel) tablePanel.style.display = (view === 'table')    ? 'block' : 'none';
+  const activeStyle   = 'background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal);padding:6px 14px;font-size:0.72rem;font-weight:600;border-radius:4px;cursor:pointer;font-family:var(--font-mono);';
+  const inactiveStyle = 'background:var(--bg-surface);color:var(--text-muted);border:1px solid var(--border);padding:6px 14px;font-size:0.72rem;border-radius:4px;cursor:pointer;font-family:var(--font-mono);';
+  if (catBtn)   { catBtn.textContent   = 'By Category';     catBtn.style.cssText   = (view === 'category') ? activeStyle : inactiveStyle; }
+  if (tableBtn) { tableBtn.textContent = 'Side-by-Side Table'; tableBtn.style.cssText = (view === 'table')    ? activeStyle : inactiveStyle; }
+}
+
 function renderIdentityTransform() { /* Task 5 */ }
 
 // ── Simulation functions ──────────────────────────────────
