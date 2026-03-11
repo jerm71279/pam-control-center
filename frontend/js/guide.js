@@ -390,6 +390,95 @@ function renderGuide() {
     <p style="margin-top:10px;font-size:0.62rem;color:var(--text-muted);">Toggle between Option A and Option B using the sidebar switch. All pages update to show the appropriate data, checkpoints, predictions, and timelines for each option.</p>
   `) +
 
+  _guideSection('Secret Migration — CyberArk Account Object vs Target', `
+    <p style="margin-bottom:12px;">The <strong>CyberArk Account Object</strong> is the atomic unit of migration. Every account stored in a Safe has a structured JSON object. The Target PAM platform may use a completely different schema — and the SHIFT ETL Transform step (Agent 04) handles this translation automatically.</p>
+
+    <h4 style="color:var(--cyan);font-family:var(--font-mono);font-size:0.72rem;margin:14px 0 8px;">CyberArk Account Object — Fields</h4>
+    <table style="width:100%;border-collapse:collapse;font-size:0.65rem;margin-bottom:14px;">
+      <thead><tr style="border-bottom:1px solid var(--border);">
+        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Field</th>
+        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Type</th>
+        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Description</th>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">name</td><td style="padding:5px 8px;color:var(--text-muted);">string</td><td style="padding:5px 8px;color:var(--text-standard);">Unique account name within the safe</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">address</td><td style="padding:5px 8px;color:var(--text-muted);">string</td><td style="padding:5px 8px;color:var(--text-standard);">Target system hostname or IP</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">userName</td><td style="padding:5px 8px;color:var(--text-muted);">string</td><td style="padding:5px 8px;color:var(--text-standard);">Account username on the target system</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">platformId</td><td style="padding:5px 8px;color:var(--text-muted);">string</td><td style="padding:5px 8px;color:var(--text-standard);">CyberArk platform type (e.g., OracleDB, WinDomain, UnixSSH)</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">safeName</td><td style="padding:5px 8px;color:var(--text-muted);">string</td><td style="padding:5px 8px;color:var(--text-standard);">Safe containing this account</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">platformAccountProperties</td><td style="padding:5px 8px;color:var(--text-muted);">object</td><td style="padding:5px 8px;color:var(--text-standard);">Platform-specific fields (e.g., Port, Database, Domain)</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">secretType</td><td style="padding:5px 8px;color:var(--text-muted);">string</td><td style="padding:5px 8px;color:var(--text-standard);">Always "password" for managed accounts</td></tr>
+        <tr><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">secret</td><td style="padding:5px 8px;color:var(--text-muted);">string</td><td style="padding:5px 8px;color:var(--text-standard);">Write-only — retrieved via separate Retrieve API call</td></tr>
+      </tbody>
+    </table>
+
+    <h4 style="color:var(--green);font-family:var(--font-mono);font-size:0.72rem;margin:14px 0 8px;">Target: Privilege Cloud — Minimal Delta</h4>
+    <p style="font-size:0.68rem;color:var(--text-standard);line-height:1.7;margin-bottom:10px;">Privilege Cloud uses the identical REST API schema. The same Account Object fields are accepted — <code style="font-family:var(--font-mono);color:var(--teal);">platformId</code>, <code style="font-family:var(--font-mono);color:var(--teal);">safeName</code>, and <code style="font-family:var(--font-mono);color:var(--teal);">platformAccountProperties</code> map 1:1. The ETL pipeline does an EXPORT from source → IMPORT to target with no field-level transformation required for standard platforms.</p>
+
+    <h4 style="color:var(--amber);font-family:var(--font-mono);font-size:0.72rem;margin:14px 0 8px;">Target: Delinea Secret Server — Structural Delta</h4>
+    <table style="width:100%;border-collapse:collapse;font-size:0.65rem;margin-bottom:14px;">
+      <thead><tr style="border-bottom:1px solid var(--border);">
+        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">CyberArk Field</th>
+        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Secret Server Field</th>
+        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Notes</th>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">safeName</td><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--amber);">folderId (int)</td><td style="padding:5px 8px;color:var(--text-standard);">Safe → Folder hierarchy, resolved via folder map built in P3</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">platformId</td><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--amber);">secretTemplateId (int)</td><td style="padding:5px 8px;color:var(--text-standard);">Platform → Secret Template, resolved via template map (Agent 13)</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">platformAccountProperties</td><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--amber);">items[] array</td><td style="padding:5px 8px;color:var(--text-standard);">Object flattened into fieldName/itemValue pairs per template definition</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">userName + address</td><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--amber);">items[] fields</td><td style="padding:5px 8px;color:var(--text-standard);">Username and Server become items with fieldName matching template</td></tr>
+        <tr><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">secret</td><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--amber);">items[].itemValue (password field)</td><td style="padding:5px 8px;color:var(--text-standard);">Retrieved separately via Retrieve API, then set as password item value</td></tr>
+      </tbody>
+    </table>
+
+    <h4 style="color:var(--teal);font-family:var(--font-mono);font-size:0.72rem;margin:14px 0 8px;">What SHIFT Does</h4>
+    <ul style="font-size:0.68rem;color:var(--text-standard);line-height:1.8;padding-left:18px;">
+      <li>Builds <strong>folder map</strong> during P3 (Safe name → folder ID) before ETL begins</li>
+      <li>Builds <strong>template map</strong> during P2 via Agent 13 (platformId → secretTemplateId)</li>
+      <li>Retrieves passwords via <code style="font-family:var(--font-mono);color:var(--teal);">POST /Accounts/{id}/Password/Retrieve</code> during EXPORT step</li>
+      <li>Constructs <code style="font-family:var(--font-mono);color:var(--teal);">items[]</code> array during TRANSFORM step by flattening platformAccountProperties</li>
+      <li>Skips accounts where password retrieval fails — flagged in audit log for manual review</li>
+    </ul>
+
+    <div class="callout amber" style="margin-top:14px;">
+      <div class="callout-title">Audit Log Discontinuity</div>
+      CyberArk audit history does <strong>NOT</strong> migrate to Delinea Secret Server. The audit trail restarts at the migration date. For compliance continuity, export and archive CyberArk audit logs before decommissioning — Agent 07 handles this automatically as part of the P7 Close-Out phase.
+    </div>
+  `) +
+
+  _guideSection('Password Rotation Connectors — CPM vs RPC vs Native', `
+    <p style="margin-bottom:12px;">Password rotation is the most operationally critical connector. <strong>CyberArk CPM</strong> (Central Policy Manager) handles rotation in the source system. Each target platform uses a different rotation mechanism, and migration effort varies significantly.</p>
+
+    <table style="width:100%;border-collapse:collapse;font-size:0.65rem;margin-bottom:16px;">
+      <thead><tr style="border-bottom:1px solid var(--border);">
+        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Connector</th>
+        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Platform</th>
+        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">How It Works</th>
+        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Migration Path</th>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">CPM</td><td style="padding:5px 8px;color:var(--text-standard);">CyberArk PAS (source)</td><td style="padding:5px 8px;color:var(--text-standard);">Reads platform .ini file, connects to target system, generates new password, pushes to vault</td><td style="padding:5px 8px;color:var(--amber);">Paused during FREEZE step, re-enabled after UNFREEZE</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--green);">CPM</td><td style="padding:5px 8px;color:var(--text-standard);">Privilege Cloud (target)</td><td style="padding:5px 8px;color:var(--text-standard);">Same CPM component, same .ini platform files — standard platforms carry over directly</td><td style="padding:5px 8px;color:var(--green);">Direct carry-over ✓ — validated by Agent 13 in staging</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--amber);">RPC</td><td style="padding:5px 8px;color:var(--text-standard);">Delinea Secret Server</td><td style="padding:5px 8px;color:var(--text-standard);">PowerShell-based Remote Password Changer, one script per Secret Template — no .ini plugin support</td><td style="padding:5px 8px;color:var(--red);">Must be rebuilt per template — Oracle requires Oracle.ManagedDataAccess.Client</td></tr>
+        <tr><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--text-muted);">Native</td><td style="padding:5px 8px;color:var(--text-standard);">Privilege Cloud SaaS targets</td><td style="padding:5px 8px;color:var(--text-standard);">Native rotation via REST API (ServiceNow, Salesforce, Azure AD, etc.)</td><td style="padding:5px 8px;color:var(--text-muted);">New onboarding only — not a migration concern for existing accounts</td></tr>
+      </tbody>
+    </table>
+
+    <h4 style="color:var(--teal);font-family:var(--font-mono);font-size:0.72rem;margin:14px 0 8px;">Rotation During Migration — FREEZE / UNFREEZE</h4>
+    <p style="font-size:0.68rem;color:var(--text-standard);line-height:1.7;margin-bottom:10px;">
+      During ETL, accounts are <strong>frozen</strong> by disabling CPM management:
+      <code style="font-family:var(--font-mono);color:var(--cyan);">PUT /Accounts/{id}</code> with <code style="font-family:var(--font-mono);color:var(--cyan);">automaticManagementEnabled: false</code>.
+      After successful migration and heartbeat validation, UNFREEZE re-enables rotation via <code style="font-family:var(--font-mono);color:var(--cyan);">true</code>.
+      If the pipeline crashes mid-migration, the Watchdog timer automatically unfreezes all accounts within <strong>120 minutes</strong> — preventing accounts from being permanently locked out of rotation.
+    </p>
+
+    <div class="callout teal" style="margin-top:14px;">
+      <div class="callout-title">Oracle DB Rotation — CPM vs RPC Detail</div>
+      <strong>CyberArk CPM (source + Privilege Cloud):</strong> Uses the built-in <code style="font-family:var(--font-mono);color:var(--teal);">OracleDB</code> platform with <code style="font-family:var(--font-mono);color:var(--teal);">Process.ini</code> that executes <code style="font-family:var(--font-mono);color:var(--teal);">ALTER USER {username} IDENTIFIED BY {new_password}</code> via the Oracle thin JDBC driver.<br><br>
+      <strong>Delinea RPC:</strong> Must be implemented as a PowerShell script using <code style="font-family:var(--font-mono);color:var(--teal);">Oracle.ManagedDataAccess.Client</code> (.NET managed driver). The script connects to the Oracle listener, executes the same ALTER USER statement, then calls the heartbeat endpoint to confirm success. Agent 13 flags this as a required manual action during P2 Platform Validation.
+    </div>
+  `) +
+
   _guideSection('Vendor Team\'s RoM for Migration to Delinea', `
     <p style="margin-bottom:12px;">The vendor SI (System Integration) team provided the following <strong>Rough Order of Magnitude (RoM)</strong> estimate for migrating to Delinea Secret Server. This represents the vendor's projected effort across 6 workstreams spanning 45 sprints.</p>
     <table style="width:100%;border-collapse:collapse;font-size:0.65rem;">
