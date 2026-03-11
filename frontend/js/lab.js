@@ -178,7 +178,172 @@ function renderLabShowcase() {
   _labSwitchTab(_labTab);
 }
 
-function renderCredentialTypes()   { /* Task 2 */ }
+function renderCredentialTypes() {
+  const el = document.getElementById('lab-panel-creds');
+  if (!el) return;
+
+  const cardStyle = (accent) =>
+    `background:var(--bg-surface);border:1px solid var(--border);border-top:3px solid ${accent};border-radius:8px;padding:18px;`;
+
+  const badgeStyle = (bg, color) =>
+    `background:${bg};color:${color};font-family:var(--font-mono);font-size:0.55rem;padding:2px 7px;border-radius:3px;`;
+
+  const fieldRow = (label, value) => `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--border);font-size:0.72rem;">
+      <span style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.62rem;letter-spacing:0.04em;">${label}</span>
+      <span style="color:var(--text-standard);text-align:right;max-width:60%;">${value}</span>
+    </div>`;
+
+  const useCasesList = (items) => items.map(i => `<li>${i}</li>`).join('');
+
+  const riskBadge = (label, bg, color) =>
+    `<div style="margin-top:14px;">
+      <span style="background:${bg};color:${color};font-family:var(--font-mono);font-size:0.6rem;padding:3px 9px;border-radius:3px;font-weight:700;">${label}</span>
+    </div>`;
+
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">&#x1F4CB; Credential Models &mdash; Dedicated &middot; Shared &middot; ZSP / JIT</div>
+      </div>
+      <div class="panel-body" style="padding:20px;">
+
+        <!-- ── Three credential cards ── -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;">
+
+          <!-- Card 1: Dedicated -->
+          <div style="${cardStyle('var(--green)')}">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="${badgeStyle('var(--green-dim)', 'var(--green)')}">DEDICATED</span>
+              <span style="font-size:1.1rem;">&#x1F512;</span>
+            </div>
+            <div style="font-weight:700;font-size:0.88rem;margin:10px 0 6px;color:var(--text-bright);">Dedicated Credential</div>
+            <div style="font-size:0.72rem;color:var(--text-standard);line-height:1.6;margin-bottom:12px;">
+              One credential bound to one person or service. No sharing. Individually tracked, rotated, and audited.
+            </div>
+            ${fieldRow('BOUND TO', 'svc-webportal @ web-server-01')}
+            ${fieldRow('ROTATION', 'Every 30 days / on session end')}
+            ${fieldRow('AUDIT TRAIL', 'Full individual history')}
+            ${fieldRow('CHECKOUT', 'Single user at a time')}
+            <div style="margin-top:12px;">
+              <div style="font-size:0.62rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:0.05em;margin-bottom:6px;">USE CASES</div>
+              <ul style="font-size:0.72rem;color:var(--text-standard);line-height:1.7;padding-left:16px;margin:0;">
+                ${useCasesList(['Human privileged admins', 'Service accounts with compliance requirements', 'Break-glass accounts'])}
+              </ul>
+            </div>
+            ${riskBadge('LOW RISK', 'var(--green-dim)', 'var(--green)')}
+          </div>
+
+          <!-- Card 2: Shared -->
+          <div style="${cardStyle('var(--amber)')}">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="${badgeStyle('var(--amber-dim)', 'var(--amber)')}">SHARED</span>
+              <span style="font-size:1.1rem;">&#x1F465;</span>
+            </div>
+            <div style="font-weight:700;font-size:0.88rem;margin:10px 0 6px;color:var(--text-bright);">Shared Credential</div>
+            <div style="font-size:0.72rem;color:var(--text-standard);line-height:1.6;margin-bottom:12px;">
+              One credential used by multiple people or services. Simpler to manage but requires tighter session controls.
+            </div>
+            ${fieldRow('BOUND TO', 'db-admin @ shared-pool-1')}
+            ${fieldRow('ROTATION', 'On each checkout return')}
+            ${fieldRow('AUDIT TRAIL', 'Session-level (who / when)')}
+            ${fieldRow('CHECKOUT', 'Dual control / time-limited')}
+            <div style="margin-top:12px;">
+              <div style="font-size:0.62rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:0.05em;margin-bottom:6px;">USE CASES</div>
+              <ul style="font-size:0.72rem;color:var(--text-standard);line-height:1.7;padding-left:16px;margin:0;">
+                ${useCasesList(['Shared service accounts', 'Legacy apps that cannot support individual credentials', 'Emergency break-glass pools'])}
+              </ul>
+            </div>
+            ${riskBadge('MEDIUM RISK', 'var(--amber-dim)', 'var(--amber)')}
+          </div>
+
+          <!-- Card 3: ZSP / JIT -->
+          <div style="${cardStyle('var(--blue)')}">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="${badgeStyle('var(--blue-dim)', 'var(--blue)')}">ZERO STANDING PRIVILEGE</span>
+              <span style="font-size:1.1rem;">&#x26A1;</span>
+            </div>
+            <div style="font-weight:700;font-size:0.88rem;margin:10px 0 6px;color:var(--text-bright);">ZSP / JIT Ephemeral</div>
+            <div style="font-size:0.72rem;color:var(--text-standard);line-height:1.6;margin-bottom:12px;">
+              No credential exists at rest. Created on-demand for the session duration, then immediately destroyed or rotated.
+            </div>
+            ${fieldRow('BOUND TO', 'Ephemeral &mdash; created per request')}
+            ${fieldRow('ROTATION', 'Immediate post-session')}
+            ${fieldRow('AUDIT TRAIL', 'Full session recording')}
+            ${fieldRow('CHECKOUT', 'Auto-expires (TTL enforced)')}
+            <div style="margin-top:12px;">
+              <div style="font-size:0.62rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:0.05em;margin-bottom:6px;">USE CASES</div>
+              <ul style="font-size:0.72rem;color:var(--text-standard);line-height:1.7;padding-left:16px;margin:0;">
+                ${useCasesList(['Just-In-Time access', 'Cloud workload identities', 'High-security environments (PCI / SOX zones)'])}
+              </ul>
+            </div>
+            ${riskBadge('LOWEST RISK', 'var(--green-dim)', 'var(--green)')}
+          </div>
+
+        </div><!-- /card grid -->
+
+        <!-- ── Comparison table ── -->
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Dedicated</th>
+              <th>Shared</th>
+              <th>ZSP / JIT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Standing credential exists?</td>
+              <td class="risk-low">Yes</td>
+              <td class="risk-medium">Yes</td>
+              <td>No</td>
+            </tr>
+            <tr>
+              <td>Simultaneous users</td>
+              <td class="risk-low">1</td>
+              <td class="risk-medium">Multiple</td>
+              <td>1 (ephemeral)</td>
+            </tr>
+            <tr>
+              <td>Rotation trigger</td>
+              <td class="risk-low">Schedule / session end</td>
+              <td class="risk-medium">Per checkout return</td>
+              <td>Always post-session</td>
+            </tr>
+            <tr>
+              <td>Blast radius if leaked</td>
+              <td class="risk-low">Low &mdash; one account</td>
+              <td class="risk-medium">High &mdash; all users</td>
+              <td>Near-zero &mdash; expired</td>
+            </tr>
+            <tr>
+              <td>Compliance best practice</td>
+              <td class="risk-low">Yes</td>
+              <td class="risk-medium">Conditional</td>
+              <td>Gold standard</td>
+            </tr>
+            <tr>
+              <td>Migration complexity</td>
+              <td class="risk-low">Low</td>
+              <td class="risk-medium">Medium</td>
+              <td>High (workflow rebuild required)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ── What SHIFT Migrates callout ── -->
+        <div class="callout teal" style="margin-top:20px;font-size:0.72rem;line-height:1.7;">
+          <div class="callout-title">What SHIFT Migrates</div>
+          SHIFT migrates Dedicated credentials 1:1. Shared credentials are flagged for rationalization &mdash;
+          each should become Dedicated or ZSP where possible. ZSP/JIT patterns require new workflow configuration
+          in the target PAM platform and are out of scope for automated ETL but are documented in the migration runbook.
+        </div>
+
+      </div><!-- /panel-body -->
+    </div><!-- /panel -->
+  `;
+}
 function renderOracleWorkflow()    { /* Task 3 */ }
 function renderConnectorComparison() { /* Task 4 */ }
 function renderIdentityTransform() { /* Task 5 */ }
