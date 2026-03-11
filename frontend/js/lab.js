@@ -10,6 +10,155 @@ let _jit = {
 };
 
 let _labTab = 'jit';
+let _oracleStep = 0;
+
+// ── Oracle DB Workflow data ───────────────────────────────
+const ORACLE_STEPS = [
+  {
+    title: 'Request Initiated',
+    connector: null,
+    stageHtml: `
+      <div style="...">
+        <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1.5px;margin-bottom:8px;">ACCESS REQUEST</div>
+        <div style="font-size:1rem;font-weight:700;color:var(--text-bright);margin-bottom:14px;">Oracle DB — ORCL-PROD @ db-server-01</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.72rem;">
+          <div><span style="color:var(--text-muted);font-family:var(--font-mono);">REQUESTOR</span><br><span style="color:var(--text-bright);font-weight:600;">dba-admin</span></div>
+          <div><span style="color:var(--text-muted);font-family:var(--font-mono);">TARGET PLATFORM</span><br><span style="color:var(--cyan);font-family:var(--font-mono);">OracleDB</span></div>
+          <div><span style="color:var(--text-muted);font-family:var(--font-mono);">ACCOUNT</span><br><span style="color:var(--text-bright);font-family:var(--font-mono);">sys @ ORCL-PROD</span></div>
+          <div><span style="color:var(--text-muted);font-family:var(--font-mono);">STATUS</span><br><span style="color:var(--amber);">&#x23F3; Pending Verification</span></div>
+        </div>
+        <div style="margin-top:12px;font-size:0.68rem;color:var(--text-muted);">Justification: Emergency DBA access — DB performance incident</div>
+      </div>`
+  },
+  {
+    title: 'Identity Verified',
+    connector: 'IDP Connector',
+    stageHtml: `
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <span style="color:var(--green);font-size:1.2rem;">&#x2714;</span>
+          <div>
+            <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);">PRIMARY ID</div>
+            <div style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-bright);">j.smith@corp.com</div>
+          </div>
+          <span class="badge badge-green" style="margin-left:auto;">VERIFIED</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="color:var(--blue);font-size:1.2rem;">&#x1F511;</span>
+          <div>
+            <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);">SECONDARY ID (VAULT)</div>
+            <div style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-bright);">j.smith-priv</div>
+          </div>
+          <span class="badge badge-green" style="margin-left:auto;">LOCATED</span>
+        </div>
+        <div style="margin-top:14px;font-size:0.68rem;color:var(--text-muted);">AD group membership confirmed. Vault account j.smith-priv has access to DB-Production safe.</div>
+      </div>`
+  },
+  {
+    title: 'Workflow Approval',
+    connector: 'Workflow Engine',
+    stageHtml: `
+      <div>
+        <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1.5px;margin-bottom:10px;">DUAL-CONTROL APPROVAL CHAIN</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-surface);border:1px solid var(--green);border-radius:6px;">
+            <div><span style="font-size:0.72rem;font-weight:600;color:var(--text-bright);">DBA Lead</span><br><span style="font-size:0.6rem;color:var(--text-muted);">maria.chen@corp.com</span></div>
+            <span class="badge badge-green">&#x2714; APPROVED</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-surface);border:1px solid var(--green);border-radius:6px;">
+            <div><span style="font-size:0.72rem;font-weight:600;color:var(--text-bright);">Security Ops</span><br><span style="font-size:0.6rem;color:var(--text-muted);">secops@corp.com</span></div>
+            <span class="badge badge-green">&#x2714; APPROVED</span>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;justify-content:space-between;font-size:0.68rem;">
+          <span style="color:var(--text-muted);">TTL WINDOW</span>
+          <span style="font-family:var(--font-mono);color:var(--amber);">60 minutes</span>
+        </div>
+      </div>`
+  },
+  {
+    title: 'Credential Retrieved',
+    connector: 'CPM / CCP Connector',
+    stageHtml: `
+      <div>
+        <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1.5px;margin-bottom:8px;">VAULT API CALL</div>
+        <div style="background:var(--bg-page);border:1px solid var(--border);border-radius:4px;padding:10px;font-family:var(--font-mono);font-size:0.68rem;color:var(--cyan);margin-bottom:12px;">
+          POST /PasswordVault/api/Accounts/{id}/Password/Retrieve<br>
+          Platform: <span style="color:var(--green);">OracleDB</span><br>
+          Account: <span style="color:var(--text-bright);">sys @ ORCL-PROD</span>
+        </div>
+        <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1.5px;margin-bottom:6px;">INJECTED CREDENTIAL</div>
+        <div style="font-family:var(--font-mono);font-size:1rem;color:var(--text-bright);letter-spacing:0.08em;">Ab3k&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;7xPq</div>
+        <div style="margin-top:8px;font-size:0.6rem;color:var(--text-muted);">Credential masked — only the PSM proxy receives the raw value</div>
+      </div>`
+  },
+  {
+    title: 'Session Launched',
+    connector: 'PSM Connector',
+    stageHtml: `
+      <div>
+        <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1.5px;margin-bottom:8px;">PSM SESSION PROXY</div>
+        <div style="background:var(--bg-page);border:1px solid var(--border);border-radius:4px;padding:10px;font-family:var(--font-mono);font-size:0.68rem;color:var(--cyan);margin-bottom:12px;">
+          sys/&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;@//db-server-01:1521/ORCL
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.68rem;">
+          <div><span style="color:var(--text-muted);font-family:var(--font-mono);">SESSION ID</span><br><span style="font-family:var(--font-mono);color:var(--text-bright);">PSM-DB-2847-A</span></div>
+          <div><span style="color:var(--text-muted);font-family:var(--font-mono);">STATUS</span><br><span style="color:var(--green);">&#x25CF; RECORDING</span></div>
+          <div><span style="color:var(--text-muted);font-family:var(--font-mono);">PORT</span><br><span style="font-family:var(--font-mono);color:var(--text-bright);">1521</span></div>
+          <div><span style="color:var(--text-muted);font-family:var(--font-mono);">SERVICE NAME</span><br><span style="font-family:var(--font-mono);color:var(--text-bright);">ORCL</span></div>
+        </div>
+      </div>`
+  },
+  {
+    title: 'Session Active',
+    connector: 'PSM + Audit Connector',
+    stageHtml: `
+      <div>
+        <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1.5px;margin-bottom:8px;">LIVE ACTIVITY LOG</div>
+        <div style="background:var(--bg-page);border:1px solid var(--border);border-radius:4px;padding:10px;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-standard);line-height:1.9;">
+          <span style="color:var(--text-muted);">14:22:01</span> <span style="color:var(--green);">SQL&gt;</span> SELECT * FROM DBA_USERS;<br>
+          <span style="color:var(--text-muted);">14:22:03</span> <span style="color:var(--text-muted);">27 rows returned</span><br>
+          <span style="color:var(--text-muted);">14:22:18</span> <span style="color:var(--green);">SQL&gt;</span> GRANT CONNECT TO app_user;<br>
+          <span style="color:var(--text-muted);">14:22:19</span> <span style="color:var(--text-muted);">Grant succeeded.</span><br>
+          <span style="color:var(--text-muted);">14:22:45</span> <span style="color:var(--green);">SQL&gt;</span> ALTER USER app_user IDENTIFIED BY &#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;;<br>
+          <span style="color:var(--text-muted);">14:22:46</span> <span style="color:var(--text-muted);">User altered.</span>
+        </div>
+        <div style="margin-top:8px;font-size:0.6rem;color:var(--text-muted);">All commands recorded by PSM. Session timer: <span style="font-family:var(--font-mono);">00:01:47</span></div>
+      </div>`
+  },
+  {
+    title: 'Session End & Rotation',
+    connector: 'CPM Connector',
+    stageHtml: `
+      <div>
+        <div id="oracle-rotation-wrap">
+          <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1.5px;margin-bottom:8px;">CPM ROTATION</div>
+          <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px;">
+            <div id="oracle-progress-fill" style="height:100%;width:0%;background:var(--blue);border-radius:3px;transition:width 0.6s ease;"></div>
+          </div>
+          <div id="oracle-progress-msg" style="font-size:0.68rem;color:var(--text-muted);font-family:var(--font-mono);">Waiting to start rotation...</div>
+        </div>
+        <div style="margin-top:12px;">
+          <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1.5px;margin-bottom:6px;">OLD CREDENTIAL</div>
+          <div id="oracle-cred-old" style="font-family:var(--font-mono);font-size:0.88rem;color:var(--text-bright);">Ab3k&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;7xPq</div>
+          <div id="oracle-cred-new" style="display:none;font-family:var(--font-mono);font-size:0.88rem;color:var(--green);margin-top:6px;"></div>
+        </div>
+        <button onclick="_oracleRunRotation()" id="oracle-rotate-btn" style="margin-top:14px;padding:8px 18px;background:var(--amber);color:#000;font-weight:700;font-size:0.78rem;border:none;border-radius:6px;cursor:pointer;">
+          &#x21BB; Trigger CPM Rotation
+        </button>
+      </div>`
+  }
+];
+
+const ORACLE_CONNECTORS = [
+  null, // step 0: no connector
+  { name: 'IDP / Directory Connector', legacy: 'LDAP integration via PVWA — Secondary ID login', target: 'OAuth2/OIDC federation — Primary ID only' },
+  { name: 'Workflow Engine', legacy: 'Dual-control via PVWA request portal', target: 'Native workflow engine with webhook triggers' },
+  { name: 'CCP / AAM Connector', legacy: 'CCP agent + POST /Accounts/{id}/Password/Retrieve', target: 'OAuth2 secrets API — no agent required' },
+  { name: 'PSM Connector', legacy: 'PSM for Databases via PVWA proxy (OracleDB platform)', target: 'Session connector with direct DB tunnel' },
+  { name: 'PSM + Audit Connector', legacy: 'PSM session recording stored in vault', target: 'Session recording in cloud + SIEM forwarding' },
+  { name: 'CPM Connector', legacy: 'CPM OracleDB.ini — ALTER USER {user} IDENTIFIED BY', target: 'Privilege Cloud: same CPM  |  Delinea: PowerShell RPC script' }
+];
 
 function _labSwitchTab(tab) {
   _labTab = tab;
@@ -344,7 +493,134 @@ function renderCredentialTypes() {
     </div><!-- /panel -->
   `;
 }
-function renderOracleWorkflow()    { /* Task 3 */ }
+function renderOracleWorkflow() {
+  const el = document.getElementById('lab-panel-oracle');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="panel-header">
+        <div class="panel-title">&#x1F4CA; Oracle DB — CorePAS Privileged Access Workflow</div>
+        <span style="font-size:0.6rem;color:var(--text-muted);font-family:var(--font-mono);">7 STEPS · CLICK-THROUGH</span>
+      </div>
+      <div class="panel-body" style="padding:20px;">
+
+        <!-- Breadcrumb -->
+        <div id="oracle-breadcrumb" style="display:flex;gap:6px;align-items:center;margin-bottom:20px;flex-wrap:wrap;"></div>
+
+        <!-- Stage -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+          <div>
+            <div id="oracle-step-title" style="font-size:0.78rem;font-weight:700;color:var(--text-bright);margin-bottom:12px;"></div>
+            <div id="oracle-stage" style="background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:16px;min-height:160px;"></div>
+          </div>
+          <div>
+            <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1.5px;margin-bottom:8px;">ACTIVE CONNECTOR</div>
+            <div id="oracle-connector-box" style="background:var(--bg-surface);border:1px solid var(--teal);border-radius:8px;padding:14px;min-height:160px;"></div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button id="oracle-prev-btn" onclick="_oraclePrev()" style="padding:8px 16px;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-muted);font-size:0.78rem;border-radius:6px;cursor:pointer;">&#x276E; Previous</button>
+          <button id="oracle-next-btn" onclick="_oracleNext()" style="padding:8px 20px;background:var(--teal);color:#000;font-weight:700;font-size:0.78rem;border:none;border-radius:6px;cursor:pointer;">Next Step &#x276F;</button>
+          <span id="oracle-step-counter" style="font-size:0.68rem;font-family:var(--font-mono);color:var(--text-muted);margin-left:auto;"></span>
+          <button onclick="_oracleReset()" style="padding:6px 12px;background:transparent;border:none;color:var(--text-muted);font-size:0.72rem;cursor:pointer;text-decoration:underline;">Restart</button>
+        </div>
+
+      </div>
+    </div>
+  `;
+  _oracleRender();
+}
+
+function _oracleRender() {
+  const s = _oracleStep;
+  const step = ORACLE_STEPS[s];
+
+  // Breadcrumb
+  const bc = document.getElementById('oracle-breadcrumb');
+  if (bc) {
+    bc.innerHTML = ORACLE_STEPS.map((st, i) => {
+      let bg, color, border;
+      if (i < s) { bg = 'var(--green-dim)'; color = 'var(--green)'; border = '1px solid var(--green)'; }
+      else if (i === s) { bg = 'var(--teal)'; color = '#000'; border = '1px solid var(--teal)'; }
+      else { bg = 'var(--bg-surface)'; color = 'var(--text-muted)'; border = '1px solid var(--border)'; }
+      return `<div onclick="_oracleGoTo(${i})" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;font-family:var(--font-mono);cursor:pointer;background:${bg};color:${color};border:${border};flex-shrink:0;">${i+1}</div>
+      ${i < ORACLE_STEPS.length-1 ? `<div style="flex:1;height:1px;background:var(--border);min-width:8px;"></div>` : ''}`;
+    }).join('');
+  }
+
+  // Step title
+  const titleEl = document.getElementById('oracle-step-title');
+  if (titleEl) titleEl.textContent = `Step ${s+1}: ${step.title}`;
+
+  // Stage content
+  const stageEl = document.getElementById('oracle-stage');
+  if (stageEl) stageEl.innerHTML = step.stageHtml;
+
+  // Connector box
+  const connEl = document.getElementById('oracle-connector-box');
+  if (connEl) {
+    const c = ORACLE_CONNECTORS[s];
+    if (!c) {
+      connEl.innerHTML = `<div style="color:var(--text-muted);font-size:0.72rem;font-style:italic;">No active connector at this step.</div>`;
+    } else {
+      connEl.innerHTML = `
+        <div style="font-size:0.78rem;font-weight:700;color:var(--teal);margin-bottom:10px;">${c.name}</div>
+        <div style="margin-bottom:8px;">
+          <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">LEGACY CYBERARK</div>
+          <div style="font-size:0.7rem;color:var(--text-standard);">${c.legacy}</div>
+        </div>
+        <div>
+          <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">TARGET PAM</div>
+          <div style="font-size:0.7rem;color:var(--green);">${c.target}</div>
+        </div>`;
+    }
+  }
+
+  // Counter
+  const counter = document.getElementById('oracle-step-counter');
+  if (counter) counter.textContent = `Step ${s+1} of ${ORACLE_STEPS.length}`;
+
+  // Button states
+  const prevBtn = document.getElementById('oracle-prev-btn');
+  const nextBtn = document.getElementById('oracle-next-btn');
+  if (prevBtn) prevBtn.disabled = s === 0;
+  if (nextBtn) {
+    nextBtn.disabled = s === ORACLE_STEPS.length - 1;
+    nextBtn.textContent = s === ORACLE_STEPS.length - 2 ? 'Final Step \u203a' : 'Next Step \u203a';
+  }
+}
+
+function _oracleNext()     { if (_oracleStep < ORACLE_STEPS.length - 1) { _oracleStep++; _oracleRender(); } }
+function _oraclePrev()     { if (_oracleStep > 0) { _oracleStep--; _oracleRender(); } }
+function _oracleGoTo(n)    { _oracleStep = n; _oracleRender(); }
+function _oracleReset()    { _oracleStep = 0; _oracleRender(); }
+
+function _oracleRunRotation() {
+  const btn = document.getElementById('oracle-rotate-btn');
+  if (btn) btn.disabled = true;
+
+  const setProgress = (pct, msg) => {
+    const f = document.getElementById('oracle-progress-fill');
+    const m = document.getElementById('oracle-progress-msg');
+    if (f) f.style.width = pct + '%';
+    if (m) m.textContent = msg;
+  };
+
+  setProgress(5, 'Initiating CPM rotation\u2026');
+  setTimeout(() => setProgress(25, 'Generating new credential\u2026'), 800);
+  setTimeout(() => setProgress(55, 'Pushing to vault\u2026'), 1600);
+  setTimeout(() => setProgress(85, 'Validating rotation\u2026'), 2400);
+  setTimeout(() => {
+    setProgress(100, 'Credential rotated successfully \u2713');
+    const oldEl = document.getElementById('oracle-cred-old');
+    if (oldEl) { oldEl.style.textDecoration = 'line-through'; oldEl.style.color = 'var(--red)'; }
+    const newEl = document.getElementById('oracle-cred-new');
+    if (newEl) { newEl.textContent = 'Xm9r\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u20222kYd'; newEl.style.display = 'block'; }
+  }, 3200);
+}
+
 function renderConnectorComparison() { /* Task 4 */ }
 function renderIdentityTransform() { /* Task 5 */ }
 
