@@ -929,7 +929,148 @@ function _connSwitchView(view) {
   if (tableBtn) { tableBtn.textContent = 'Side-by-Side Table'; tableBtn.style.cssText = (view === 'table')    ? activeStyle : inactiveStyle; }
 }
 
-function renderIdentityTransform() { /* Task 5 */ }
+function renderIdentityTransform() {
+  const el = document.getElementById('lab-panel-identity');
+  if (!el) return;
+
+  // ── helpers ──────────────────────────────────────────────
+  const identityBox = ({ icon, label, value, description, borderColor }) => `
+    <div style="background:var(--bg-page);border:1px solid ${borderColor || 'var(--border)'};border-radius:6px;padding:12px;">
+      <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">${icon} ${label}</div>
+      ${value ? `<div style="font-size:0.88rem;font-weight:700;color:var(--text-bright);font-family:var(--font-mono);margin-bottom:4px;">${value}</div>` : ''}
+      <div style="font-size:0.68rem;color:var(--text-muted);">${description}</div>
+    </div>`;
+
+  const subLabel = (text) =>
+    `<div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">${text}</div>`;
+
+  const downArrow = (color) =>
+    `<div style="text-align:center;font-size:1.1rem;color:${color};margin:6px 0;">&darr;</div>`;
+
+  // ── TODAY card ───────────────────────────────────────────
+  const todayCard = `
+    <div class="card" style="border-top:3px solid var(--amber);">
+      <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--amber);letter-spacing:1.5px;margin-bottom:14px;">TODAY — CyberArk PAS (Legacy)</div>
+
+      ${subLabel('HUMAN USERS')}
+      ${identityBox({ icon: '&#x1F464;', label: 'PRIMARY ID', value: 'j.smith@corp.com', description: 'Corporate identity — AD/email/apps login' })}
+      ${downArrow('var(--amber)')}
+      ${identityBox({ icon: '&#x1F511;', label: 'SECONDARY ID (VAULT)', value: 'j.smith-priv', description: 'Privileged vault account — PVWA login only' })}
+
+      <div style="background:var(--amber-dim);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;padding:10px;margin-top:10px;font-size:0.68rem;">
+        <div style="font-weight:700;color:var(--amber);margin-bottom:6px;">&#x26A0; Pain Points</div>
+        <ul style="margin:0;padding-left:16px;color:var(--text-muted);line-height:1.7;">
+          <li>Two separate passwords to manage</li>
+          <li>PVWA login uses secondary ID only</li>
+          <li>Access reviews cover both accounts separately</li>
+          <li>De-provisioning requires two steps</li>
+        </ul>
+      </div>
+
+      <div style="margin-top:16px;">
+        ${subLabel('APPLICATIONS / SERVICES')}
+        ${identityBox({ icon: '&#x2699;', label: 'PRIMARY ID (ONLY)', value: 'svc-oracle-prod', description: 'Single service account, CPM-managed', borderColor: 'var(--green)' })}
+      </div>
+    </div>`;
+
+  // ── TARGET WORLD card ────────────────────────────────────
+  const targetCard = `
+    <div class="card" style="border-top:3px solid var(--green);">
+      <div style="font-size:0.6rem;font-family:var(--font-mono);color:var(--green);letter-spacing:1.5px;margin-bottom:14px;">TARGET WORLD — Unified PAM</div>
+
+      ${subLabel('HUMAN USERS')}
+      ${identityBox({ icon: '&#x1F464;', label: 'SINGLE IDENTITY', value: 'j.smith@corp.com', description: 'Corporate identity — SSO into PAM portal', borderColor: 'var(--green)' })}
+      ${downArrow('var(--green)')}
+      <div style="background:var(--bg-page);border:1px solid var(--blue);border-radius:6px;padding:12px;">
+        <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">&#x26A1; DYNAMIC JIT GRANT</div>
+        <div style="font-size:0.68rem;color:var(--text-muted);">Ephemeral privilege — approved per request, auto-expires after TTL. No standing secondary account.</div>
+      </div>
+
+      <div style="background:var(--teal-dim);border-left:3px solid var(--teal);border-radius:0 4px 4px 0;padding:10px;margin-top:10px;font-size:0.68rem;">
+        <div style="font-weight:700;color:var(--teal);margin-bottom:6px;">&#x2714; Resolved</div>
+        <ul style="margin:0;padding-left:16px;color:var(--text-muted);line-height:1.7;">
+          <li>Single identity — SSO login into PAM portal</li>
+          <li>No secondary account to provision or de-provision</li>
+          <li>Access reviews on one account only</li>
+          <li>Automated onboarding via IDP + SCIM</li>
+        </ul>
+      </div>
+
+      <div style="margin-top:16px;">
+        ${subLabel('APPLICATIONS / SERVICES')}
+        ${identityBox({ icon: '&#x2699;', label: 'WORKLOAD IDENTITY', value: 'svc-oracle-prod OR ephemeral', description: 'Secrets fetched via OAuth2 API — no human ever touches the password', borderColor: 'var(--teal)' })}
+      </div>
+    </div>`;
+
+  // ── Section 3: scenario table rows ───────────────────────
+  const tableRows = [
+    {
+      scenario: 'DBA needs emergency Oracle access',
+      today: 'Log into PVWA with secondary ID (j.smith-priv), request dual-control access, wait for approval, launch PSM session',
+      target: 'SSO into PAM portal with primary ID, request JIT &rarr; auto-approve or manager approves &rarr; ephemeral credential injected',
+      connector: 'IDP + JIT Workflow Connector'
+    },
+    {
+      scenario: 'App needs DB password at runtime',
+      today: 'App calls CCP agent with certificate, agent retrieves from vault, returns raw password',
+      target: 'App calls OAuth2 secrets endpoint with client credentials, gets ephemeral token, secret returned',
+      connector: 'CCP / AAM &rarr; OAuth2 Connector'
+    },
+    {
+      scenario: 'New admin onboarding',
+      today: 'Create corp AD account + create PVWA secondary ID + assign to safes + train on PVWA',
+      target: 'Create corp AD account + assign PAM role &rarr; done. PAM portal auto-provisioned via SSO + SCIM',
+      connector: 'IDP / SCIM Connector'
+    }
+  ].map(r => `
+    <tr>
+      <td>${r.scenario}</td>
+      <td class="risk-medium">${r.today}</td>
+      <td>${r.target}</td>
+      <td style="font-family:var(--font-mono);font-size:0.68rem;color:var(--teal);">${r.connector}</td>
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-title">&#x1F464; Identity Model — Today vs Target World</div>
+
+      <!-- Section 1: Two-column cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+        ${todayCard}
+        ${targetCard}
+      </div>
+
+      <!-- Section 2: Transformation arrow row -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0;padding:12px;background:var(--bg-surface);border-radius:6px;">
+        <div style="text-align:center;">
+          <div style="font-size:1.3rem;color:var(--teal);">&#x2192;</div>
+          <div style="font-size:0.82rem;font-weight:700;color:var(--teal);font-family:var(--font-mono);letter-spacing:0.5px;">SHIFT Migration Transforms Identity Experience</div>
+          <div style="font-size:0.66rem;color:var(--text-muted);margin-top:4px;">Human vault accounts reduced &middot; Service accounts consolidated &middot; ZSP available for high-security zones</div>
+        </div>
+      </div>
+
+      <!-- Section 3: Scenario comparison table -->
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>Today's Experience</th>
+            <th>Target Experience</th>
+            <th>Connector Involved</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+
+      <!-- Section 4: Bottom callout -->
+      <div class="callout teal">
+        <div class="callout-title">Key Design Decision</div>
+        In the target world, the number of managed identities in the PAM vault decreases — humans use dynamic privilege grants instead of standing vault accounts, and applications use workload identity or ephemeral secrets. The vault becomes smaller but more powerful. This is the core identity experience transformation SHIFT enables.
+      </div>
+    </div>`;
+}
 
 // ── Simulation functions ──────────────────────────────────
 
