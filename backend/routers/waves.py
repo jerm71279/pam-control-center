@@ -84,6 +84,7 @@ def _step_detail(step, count, success, option):
         "CREATE SAFES": f"Safes created in Privilege Cloud (matching source names)",
         "IMPORT": f"{success} secrets created in target",
         "HEARTBEAT": f"{success - 1}/{success} heartbeat verified ({(success-1)/success*100:.1f}%)",
+        "INTEGRITY": f"Agent 18: 12 IC checks passed — schema match confirmed (read-only session)",
         "UNFREEZE": f"{count} accounts unfrozen — CPM management re-enabled",
         "RECODE INTEGRATIONS": f"CCP/AAM integration code updated for target API",
         "UPDATE ENDPOINTS": f"CCP/AAM endpoint URLs updated for Privilege Cloud",

@@ -65,8 +65,8 @@
   </button>
 
   <div class="sidebar-footer">
-    iOPEX SHIFT v2.0<br>
-    <span id="weekPlanLabel">80-WEEK PLAN</span> / 15+2 AGENTS<br>
+    iOPEX SHIFT v2.1<br>
+    <span id="weekPlanLabel">80-WEEK PLAN</span> / 15+3 AGENTS<br>
     FastAPI + Vanilla JS
   </div>
 </nav>
@@ -150,6 +150,20 @@
       </div>
       <div id="predictionsPanel"></div>
     </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Circuit Breaker Status</div>
+        <span class="badge badge-cyan" id="cbStatusBadge"></span>
+      </div>
+      <div id="circuitBreakerPanel"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Schema Drift Monitor</div>
+        <span class="badge badge-amber" id="driftEventCount"></span>
+      </div>
+      <div id="schemaDriftPanel"></div>
+    </div>
   </div>
 
   <!-- ──── PHASE EXPLORER ──── -->
@@ -186,7 +200,7 @@
       <div class="panel-header">
         <div class="panel-title">ETL Pipeline Simulation</div>
         <div>
-          <select id="waveSelect" style="background:var(--bg-surface);color:var(--text-standard);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.72rem;margin-right:8px;">
+          <select id="waveSelect" onchange="renderIntegrityReport(this.value)" style="background:var(--bg-surface);color:var(--text-standard);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.72rem;margin-right:8px;">
             <option value="1">Wave 1</option>
             <option value="2">Wave 2</option>
             <option value="3">Wave 3</option>
@@ -201,9 +215,19 @@
     </div>
     <div class="panel" style="margin-top:16px;">
       <div class="panel-header">
-        <div class="panel-title">Heartbeat Validation (10 Checks)</div>
+        <div class="panel-title">Heartbeat Validation — Agent 05 (10 Checks)</div>
       </div>
       <div class="health-grid" id="heartbeatChecks"></div>
+    </div>
+    <div class="panel" style="margin-top:16px;">
+      <div class="panel-header">
+        <div class="panel-title">Integrity Validation — Agent 18 (12 IC Checks)</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="badge badge-purple" id="integrityAccBadge"></span>
+          <span style="font-size:0.58rem;color:var(--text-muted);font-family:var(--font-mono);">INDEPENDENT SESSION</span>
+        </div>
+      </div>
+      <div id="integrityChecksPanel"></div>
     </div>
   </div>
 

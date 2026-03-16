@@ -520,6 +520,15 @@ AGENTS = {
         "api_calls": [],
         "gates": [], "blocked_by": [9],
     },
+    "18": {
+        "num": "18", "name": "Integrity Validator", "phases": ["p4", "p5", "p6"],
+        "weeks": "W43-72", "weeks_b": "W26-46", "status": "active",
+        "desc": "Independent migration integrity re-validator. Runs 12 schema-level checks (IC_01–IC_12) using a SEPARATE read-only API session from the Migration Executor. Inspired by PwC Judge Agent pattern (10%→70% accuracy). Operates after Agent 04 (ETL) + Agent 05 (Heartbeat). Blocking failures pause wave advancement. Cannot modify any vault record.",
+        "inputs": ["Agent 04 migration manifest", "Agent 05 heartbeat report", "Source vault (read-only session)"],
+        "outputs": ["WaveIntegrityReport (per wave)", "Blocking failure list", "IC check results (12 checks)"],
+        "api_calls": ["GET /Accounts/{id} (read-only, separate session)", "GET /Safes/{name}/Members (read-only)"],
+        "gates": [], "blocked_by": [5],
+    },
 }
 
 # ── Waves ────────────────────────────────────────────────────────────
@@ -537,8 +546,8 @@ WAVES = {
         "description": "Lowest risk — test/dev environments, sandbox accounts, proof-of-concept. Validates production pipeline at scale.",
         "gate": "g7",
         "status": "complete",
-        "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
-        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "UNFREEZE"],
+        "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "INTEGRITY", "UNFREEZE"],
+        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "INTEGRITY", "UNFREEZE"],
     },
     "2": {
         "name": "Infrastructure Accounts",
@@ -552,8 +561,8 @@ WAVES = {
         "description": "Domain admin accounts, database service accounts, network infrastructure. Tight change windows required.",
         "gate": "g8",
         "status": "complete",
-        "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
-        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "UNFREEZE"],
+        "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "INTEGRITY", "UNFREEZE"],
+        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "INTEGRITY", "UNFREEZE"],
     },
     "3": {
         "name": "NHIs (No CCP/AAM)",
@@ -567,8 +576,8 @@ WAVES = {
         "description": "Non-human identities without CCP/AAM integrations. Agent 12 provides rotation policies. Dependency graph respected.",
         "gate": "g9",
         "status": "complete",
-        "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
-        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "UNFREEZE"],
+        "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "INTEGRITY", "UNFREEZE"],
+        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "INTEGRITY", "UNFREEZE"],
     },
     "4": {
         "name": "NHIs With CCP/AAM",
@@ -597,8 +606,8 @@ WAVES = {
         "description": "Remaining accounts, newly discovered applications, compliance report generation, 100% coverage reconciliation.",
         "gate": "g11",
         "status": "complete",
-        "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
-        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "UNFREEZE"],
+        "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE FOLDERS", "IMPORT", "HEARTBEAT", "INTEGRITY", "UNFREEZE"],
+        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE SAFES", "IMPORT", "INTEGRITY", "UNFREEZE"],
     },
 }
 

@@ -32,8 +32,11 @@ async function renderWaves() {
   // ETL pipeline for selected wave
   renderETLPipeline(waves[0]);
 
-  // Heartbeat checks (show pilot validation format)
+  // Heartbeat checks
   renderHeartbeatChecks();
+
+  // Agent 18 integrity report (default wave 1)
+  renderIntegrityReport('1');
 }
 
 function renderETLPipeline(wave) {
@@ -87,8 +90,9 @@ async function runWaveSimulation() {
   btn.disabled = false;
   waveAnimating = false;
 
-  // Update heartbeat after simulation
+  // Update heartbeat + integrity after simulation
   renderHeartbeatChecks();
+  renderIntegrityReport(waveId);
 }
 
 async function viewWaveDetail(waveId) {
@@ -158,3 +162,69 @@ function renderHeartbeatChecks() {
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Agent 18 — Integrity Validation Report ──────────────────────────
+
+async function renderIntegrityReport(waveId) {
+  const panel = document.getElementById('integrityChecksPanel');
+  const badge = document.getElementById('integrityAccBadge');
+  if (!panel) return;
+
+  panel.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:0.7rem;">Loading integrity report...</div>';
+
+  const data = await API.get(`/integrity/${waveId}`);
+  if (data.error) {
+    panel.innerHTML = `<div style="padding:14px;color:var(--red);font-size:0.7rem;">${data.error}</div>`;
+    return;
+  }
+
+  const accColor = data.accuracy_pct >= 99 ? 'var(--green)' : data.accuracy_pct >= 95 ? 'var(--amber)' : 'var(--red)';
+  if (badge) badge.textContent = `${data.accuracy_pct.toFixed(1)}% ACCURACY`;
+
+  const statusColor = { pass: 'dot-green', warn: 'dot-amber', fail: 'dot-red' };
+  const statusLabel = { pass: 'PASS', warn: 'WARN', fail: 'FAIL' };
+  const statusBadge = { pass: 'badge-green', warn: 'badge-amber', fail: 'badge-red' };
+  const sevColor = { CRITICAL: 'var(--red)', HIGH: 'var(--amber)', MEDIUM: 'var(--blue)' };
+
+  panel.innerHTML = `
+    <div style="padding:14px 18px 8px;display:flex;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:8px;">
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);min-width:70px;">
+        <div style="font-size:1.1rem;font-weight:800;color:${accColor}">${data.accuracy_pct.toFixed(1)}%</div>
+        <div style="font-size:0.52rem;color:var(--text-muted);margin-top:2px;">Accuracy</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);min-width:60px;">
+        <div style="font-size:1.1rem;font-weight:800;color:var(--green)">${data.passed}</div>
+        <div style="font-size:0.52rem;color:var(--text-muted);margin-top:2px;">Passed</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 14px;background:var(--bg-surface);border:1px solid ${data.failed > 0 ? 'var(--red)' : 'var(--border)'};border-radius:var(--radius);min-width:60px;">
+        <div style="font-size:1.1rem;font-weight:800;color:${data.failed > 0 ? 'var(--red)' : 'var(--text-muted)'}">${data.failed}</div>
+        <div style="font-size:0.52rem;color:var(--text-muted);margin-top:2px;">Failed</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:8px 14px;background:var(--bg-surface);border:1px solid ${data.warned > 0 ? 'var(--amber)' : 'var(--border)'};border-radius:var(--radius);min-width:60px;">
+        <div style="font-size:1.1rem;font-weight:800;color:${data.warned > 0 ? 'var(--amber)' : 'var(--text-muted)'}">${data.warned}</div>
+        <div style="font-size:0.52rem;color:var(--text-muted);margin-top:2px;">Warned</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);min-width:160px;">
+        <div style="font-size:0.6rem;color:var(--text-muted);font-family:var(--font-mono);">WAVE ${data.wave} — ${data.wave_name}</div>
+        <div style="font-size:0.6rem;color:var(--text-muted);margin-top:3px;">${data.total_accounts.toLocaleString()} accounts &bull; ${data.checks_run} IC checks</div>
+        <div style="font-size:0.55rem;color:var(--purple);margin-top:3px);font-family:var(--font-mono);">${data.session}</div>
+      </div>
+    </div>
+    <div class="health-grid" style="padding:8px 14px 14px;">
+      ${data.checks.map(c => `
+        <div class="health-item" style="${c.status === 'fail' ? 'border:1px solid var(--red-dim);background:var(--red-dim);border-radius:4px;' : c.status === 'warn' ? 'border:1px solid var(--amber-dim);background:var(--amber-dim);border-radius:4px;' : ''}">
+          <div class="health-dot ${statusColor[c.status]}"></div>
+          <div style="flex:1">
+            <div class="health-name" style="display:flex;gap:6px;align-items:center;">
+              <span>${c.id}</span>
+              <span style="color:var(--text-standard)">${c.name}</span>
+              ${c.blocking ? '<span style="font-size:0.42rem;font-family:var(--font-mono);color:' + sevColor[c.severity] + ';border:1px solid currentColor;padding:1px 4px;border-radius:2px;">BLOCKING</span>' : ''}
+            </div>
+            <div class="health-msg">${c.detail}</div>
+          </div>
+          <span class="badge ${statusBadge[c.status]}" style="font-size:0.42rem;">${statusLabel[c.status]}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
