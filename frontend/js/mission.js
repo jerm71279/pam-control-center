@@ -899,7 +899,7 @@ async function renderSchemaDrift() {
       `).join('')}
     </div>
     <div style="padding:0 14px 12px;font-size:0.58rem;color:var(--text-muted);font-family:var(--font-mono);">
-      ${s.checkpoints_fired} checkpoint(s) fired &bull; Last scan: ${new Date(data.last_scan).toLocaleTimeString()} &bull; Prevents 98%→77% accuracy decay over 80-week engagement
+      ${s.checkpoints_fired} checkpoint(s) fired &bull; Last scan: ${new Date(data.last_scan).toLocaleTimeString()} &bull; Prevents 98%→77% accuracy decay over multi-year Cisco engagement
     </div>
   `;
 }

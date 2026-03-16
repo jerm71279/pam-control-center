@@ -158,7 +158,7 @@ const ORACLE_CONNECTORS = [
   { name: 'CCP / AAM Connector', legacy: 'CCP agent + POST /Accounts/{id}/Password/Retrieve', target: 'OAuth2 secrets API — no agent required' },
   { name: 'PSM Connector', legacy: 'PSM for Databases via PVWA proxy (OracleDB platform)', target: 'Session connector with direct DB tunnel' },
   { name: 'PSM + Audit Connector', legacy: 'PSM session recording stored in vault', target: 'Session recording in cloud + SIEM forwarding' },
-  { name: 'CPM Connector', legacy: 'CPM OracleDB.ini — ALTER USER {user} IDENTIFIED BY', target: 'Privilege Cloud: same CPM  |  Delinea: PowerShell RPC script' }
+  { name: 'Rotation Connector', legacy: 'CPM OracleDB.ini — ALTER USER {user} IDENTIFIED BY', target: 'Devolutions: RDM Agent rotation script  |  Keeper: Gateway rotation script  |  MiniOrange: basic script' }
 ];
 
 function _labSwitchTab(tab) {
@@ -646,8 +646,8 @@ function renderConnectorComparison() {
             <tr>
               <th>Aspect</th>
               <th>Legacy CyberArk CPM</th>
-              <th>Delinea (RPC)</th>
-              <th>Privilege Cloud CPM</th>
+              <th>Devolutions (RDM Agent)</th>
+              <th>Keeper (Gateway Script)</th>
             </tr>
           </thead>
           <tbody>
@@ -687,21 +687,21 @@ function renderConnectorComparison() {
 
       <!-- Group 2: Session Management -->
       <div class="panel" style="margin-bottom:12px;">
-        <div class="panel-title">Session Management &mdash; PSM vs StrongDM vs Cloud PSM</div>
+        <div class="panel-title">Session Management &mdash; PSM vs RDM vs KCM</div>
         <table class="compare-table">
           <thead>
             <tr>
               <th>Aspect</th>
               <th>Legacy PSM</th>
-              <th>Delinea + StrongDM</th>
-              <th>Privilege Cloud PSM</th>
+              <th>Devolutions (RDM)</th>
+              <th>Keeper (KCM)</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>Component</td>
               <td>PSM &mdash; Privileged Session Manager</td>
-              <td>StrongDM gateway proxy</td>
+              <td>RDM/KCM gateway</td>
               <td>PSM for Cloud</td>
             </tr>
             <tr>
@@ -713,7 +713,7 @@ function renderConnectorComparison() {
             <tr>
               <td>Recording storage</td>
               <td>Vault-side (on-prem)</td>
-              <td>StrongDM cloud</td>
+              <td>Keeper Cloud (KCM)</td>
               <td>CyberArk cloud</td>
             </tr>
             <tr>
@@ -725,7 +725,7 @@ function renderConnectorComparison() {
             <tr>
               <td>Session isolation</td>
               <td>PVWA proxy</td>
-              <td>StrongDM gateway</td>
+              <td>RDM Gateway / KCM</td>
               <td>PVWA cloud proxy</td>
             </tr>
           </tbody>
@@ -740,8 +740,8 @@ function renderConnectorComparison() {
             <tr>
               <th>Aspect</th>
               <th>Legacy CCP / AAM</th>
-              <th>Delinea REST</th>
-              <th>Privilege Cloud</th>
+              <th>Devolutions REST</th>
+              <th>Keeper API</th>
             </tr>
           </thead>
           <tbody>
@@ -760,7 +760,7 @@ function renderConnectorComparison() {
             <tr>
               <td>Secret endpoint</td>
               <td><code>POST /Accounts/{id}/Password/Retrieve</code></td>
-              <td><code>GET /api/v1/secrets/{id}</code></td>
+              <td><code>GET /api/v1/entries/{id}</code></td>
               <td><code>POST /Accounts/{id}/Password/Retrieve</code></td>
             </tr>
             <tr>
@@ -803,9 +803,9 @@ function renderConnectorComparison() {
 
           <!-- Right: two stacked targets -->
           <div>
-            <!-- Privilege Cloud -->
+            <!-- Keeper -->
             <div style="border:1px solid var(--green);border-radius:6px;overflow:hidden;">
-              <div style="background:var(--green-dim);padding:6px 10px;font-size:0.6rem;font-family:var(--font-mono);color:var(--green);letter-spacing:1px;">PRIVILEGE CLOUD TARGET (MINIMAL DELTA)</div>
+              <div style="background:var(--cyan-dim);padding:6px 10px;font-size:0.6rem;font-family:var(--font-mono);color:var(--cyan);letter-spacing:1px;">KEEPER TARGET (3-TIER HIERARCHY)</div>
               <pre style="background:var(--bg-page);padding:12px;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-standard);margin:0;overflow-x:auto;">{
   "name": "sys-ORCL-PROD-db01",  // identical
   "address": "db-server-01",     // identical
@@ -819,9 +819,9 @@ function renderConnectorComparison() {
 }</pre>
             </div>
 
-            <!-- Delinea -->
+            <!-- Devolutions -->
             <div style="border:1px solid var(--amber);border-radius:6px;overflow:hidden;margin-top:12px;">
-              <div style="background:var(--amber-dim);padding:6px 10px;font-size:0.6rem;font-family:var(--font-mono);color:var(--amber);letter-spacing:1px;">DELINEA SECRET SERVER TARGET (STRUCTURAL DELTA)</div>
+              <div style="background:var(--blue-dim);padding:6px 10px;font-size:0.6rem;font-family:var(--font-mono);color:var(--blue);letter-spacing:1px;">DEVOLUTIONS SERVER TARGET (VAULT ENTRY MODEL)</div>
               <pre style="background:var(--bg-page);padding:12px;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-standard);margin:0;overflow-x:auto;">{
   "name": "sys-ORCL-PROD-db01",
   "folderId": 142,               // &larr; was safeName
@@ -853,8 +853,8 @@ function renderConnectorComparison() {
             <th>Component</th>
             <th>Legacy</th>
             <th>Legacy Mechanism</th>
-            <th>Delinea Target</th>
-            <th>Privilege Cloud Target</th>
+            <th>Devolutions Target</th>
+            <th>Keeper Target</th>
             <th>Migration Effort</th>
           </tr>
         </thead>
@@ -865,13 +865,13 @@ function renderConnectorComparison() {
             <td><code>.ini</code> platform plugin + Process.ini</td>
             <td>RPC PowerShell script per template</td>
             <td>CPM <code>.ini</code> &mdash; direct carry-over</td>
-            <td><span class="risk-high">High (Delinea)</span> / <span class="risk-low">Low (PCloud)</span></td>
+            <td><span class="risk-high">High (Keeper 3-tier)</span> / <span class="risk-medium">Med (Devolutions)</span></td>
           </tr>
           <tr>
             <td>Session Management</td>
             <td>PSM</td>
             <td>PVWA session proxy</td>
-            <td>StrongDM gateway</td>
+            <td>RDM / KCM gateway</td>
             <td>PSM for Cloud</td>
             <td class="risk-medium">Medium</td>
           </tr>
@@ -881,7 +881,7 @@ function renderConnectorComparison() {
             <td>Agent + certificate auth</td>
             <td>OAuth2 REST API</td>
             <td>CCP / AAM OAuth2</td>
-            <td><span class="risk-high">High (Delinea)</span> / <span class="risk-low">Low (PCloud)</span></td>
+            <td><span class="risk-high">High (Keeper 3-tier)</span> / <span class="risk-medium">Med (Devolutions)</span></td>
           </tr>
           <tr>
             <td>Dual-Control Workflow</td>

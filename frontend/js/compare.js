@@ -129,7 +129,7 @@ function renderDisclaimer() {
   document.getElementById('disclaimerContent').innerHTML = `
     <div class="callout amber">
       <div class="callout-title" style="color:var(--amber)">Interactive Demo — Not Connected to Live PAM</div>
-      <p>This control center uses <strong>mock data</strong> to demonstrate the migration journey. It is not connected to any live CyberArk, Secret Server, or StrongDM instance.</p>
+      <p>This control center uses <strong>mock data</strong> to demonstrate the migration journey. It is not connected to any live CyberArk, Devolutions, Keeper, or MiniOrange instance.</p>
     </div>
 
     <div class="panel" style="margin-top:16px">

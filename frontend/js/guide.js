@@ -131,7 +131,7 @@ function renderGuide() {
   `) +
 
   _guideSection('What Is This Control Center?', `
-    <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing a large-scale Privileged Access Management migration. It provides visibility into every phase, agent, gate, and risk factor across an 80-week (Option A) or 50-week (Option B) migration timeline.</p>
+    <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing Cisco's large-scale CyberArk PAM migration. It provides visibility into every phase, agent, gate, and risk factor across three evaluated target platforms: <strong style="color:var(--blue)">Devolutions</strong> (44w), <strong style="color:var(--cyan)">Keeper Security</strong> (36w), and <strong style="color:var(--purple)">MiniOrange</strong> (32w). CyberArk is owned by a Cisco competitor — Cisco requires a clean, full migration off CyberArk to a vendor-neutral PAM platform.</p>
     <p><strong>Technical overview:</strong> The frontend is a single-page app (Vanilla JS, no frameworks) served by a FastAPI backend. All data flows through the 15-agent AI orchestrator. Each page visualizes a different slice of the orchestrator's output — from high-level phase timelines down to individual account-level ETL results. The two MCP servers (pam-migration-mcp and SHIFT Portal) provide Model Context Protocol integration for AI-assisted operations.</p>
     <p>This control center is a <strong>demonstration/proposal tool</strong> — it uses mock data to show how the migration would be managed. In production, the backend connects to live CyberArk PVWA and target platform APIs.</p>
   `) +
@@ -160,7 +160,7 @@ function renderGuide() {
       <div class="shift-arch-arrow">&#x25BC;</div>
       <div class="shift-arch-layer" style="background:var(--cyan-dim);border-color:var(--cyan);">
         <div class="shift-arch-label" style="color:var(--cyan);">INFRASTRUCTURE LAYER</div>
-        <div class="shift-arch-desc">PAM APIs (CyberArk, Delinea, StrongDM) &middot; MCP Servers &middot; State Store &middot; Audit Logger</div>
+        <div class="shift-arch-desc">PAM APIs (CyberArk source, Devolutions, Keeper, MiniOrange) &middot; MCP Servers &middot; State Store &middot; Audit Logger</div>
         <div style="font-size:0.52rem;color:var(--cyan);margin-top:6px;font-family:var(--font-mono);letter-spacing:1px;">VENDOR-AGNOSTIC ADAPTERS</div>
       </div>
     </div>
@@ -362,32 +362,34 @@ function renderGuide() {
       <thead>
         <tr style="border-bottom:2px solid var(--border);color:var(--text-muted);text-align:left;">
           <th style="padding:6px 8px;">Aspect</th>
-          <th style="padding:6px 8px;">Option A: Delinea (Secret Server)</th>
-          <th style="padding:6px 8px;">Option B: CyberArk Cloud (Privilege Cloud)</th>
+          <th style="padding:6px 8px;color:var(--blue);">Option A: Devolutions</th>
+          <th style="padding:6px 8px;color:var(--cyan);">Option B: Keeper</th>
+          <th style="padding:6px 8px;color:var(--purple);">Option C: MiniOrange</th>
         </tr>
       </thead>
       <tbody>
         ${[
-          ['Timeline', '80 weeks', '50 weeks'],
-          ['Permission Model', '22 &rarr; 4 roles (LOSSY — escalation risk)', '22 &rarr; 22 (1:1 mapping)'],
-          ['Data Structure', 'Safe &rarr; Folder (hierarchical)', 'Safe &rarr; Safe (identical)'],
-          ['Platforms', 'Platform &rarr; Secret Template', 'Platform &rarr; Platform'],
-          ['API Surface', 'Completely different (/api/v1/)', 'Same (/PasswordVault/api/)'],
-          ['Audit Logs', 'Do NOT transfer', 'Can migrate'],
-          ['PSM Recordings', 'Cannot migrate', 'Can migrate'],
-          ['Integration Rework', 'Full re-architecture (CCP/AAM &rarr; OAuth2)', 'Similar patterns'],
-          ['CPM/RPC', 'RPC plugins must be rebuilt per template', 'CPM plugins carry over'],
-          ['Risk Level', 'Higher — permission loss, audit discontinuity', 'Lower — same vendor ecosystem'],
+          ['Timeline', '44 weeks', '36 weeks', '32 weeks'],
+          ['Permission Model', '22 &rarr; Vault roles (LOSSY)', '22 &rarr; 4 axes (LOSSY)', '22 &rarr; 3 levels (most loss)'],
+          ['Data Structure', 'Safe &rarr; Vault Entry (flat)', 'Safe &rarr; 3-tier (PAM Config/Resource/User)', 'Safe &rarr; Resource Group'],
+          ['Platforms', 'Platform &rarr; Entry Type', 'Platform &rarr; PAM Template', 'Platform &rarr; Policy Template'],
+          ['API Surface', 'REST + RDM Agent API', 'Keeper REST + KSM SDK', 'REST API only'],
+          ['Audit Logs', 'Do NOT transfer', 'Do NOT transfer', 'Do NOT transfer'],
+          ['PSM Recordings', 'Cannot migrate — RDM sessions new', 'Cannot migrate — KCM sessions new', 'Cannot migrate'],
+          ['Integration Rework', 'CCP/AAM &rarr; RDM Agent scripts', 'CCP/AAM &rarr; KSM (40+ integrations)', 'CCP/AAM &rarr; REST API only'],
+          ['Rotation', 'RDM Agent scripts (~custom per platform)', 'Gateway scripts (~25-30 platforms)', 'Basic scripts (~15-20 platforms)'],
+          ['Risk Level', 'Medium — flat model reduces structural risk', 'Medium — 3-tier rebuild + Cisco gear gap', 'Higher — lowest PAM depth at Cisco scale'],
         ].map(r => `
           <tr style="border-bottom:1px solid var(--border-light);">
             <td style="padding:5px 8px;font-weight:600;color:var(--text-bright);">${r[0]}</td>
             <td style="padding:5px 8px;color:var(--blue);">${r[1]}</td>
-            <td style="padding:5px 8px;color:var(--green);">${r[2]}</td>
+            <td style="padding:5px 8px;color:var(--cyan);">${r[2]}</td>
+            <td style="padding:5px 8px;color:var(--purple);">${r[3] || '—'}</td>
           </tr>
         `).join('')}
       </tbody>
     </table>
-    <p style="margin-top:10px;font-size:0.62rem;color:var(--text-muted);">Toggle between Option A and Option B using the sidebar switch. All pages update to show the appropriate data, checkpoints, predictions, and timelines for each option.</p>
+    <p style="margin-top:10px;font-size:0.62rem;color:var(--text-muted);">Toggle between Option A, B, and C using the sidebar switch. All pages update to show the appropriate data, checkpoints, predictions, and timelines for each option.</p>
   `) +
 
   _guideSection('Secret Migration — CyberArk Account Object vs Target', `
@@ -412,14 +414,14 @@ function renderGuide() {
       </tbody>
     </table>
 
-    <h4 style="color:var(--green);font-family:var(--font-mono);font-size:0.72rem;margin:14px 0 8px;">Target: Privilege Cloud — Minimal Delta</h4>
-    <p style="font-size:0.68rem;color:var(--text-standard);line-height:1.7;margin-bottom:10px;">Privilege Cloud uses the identical REST API schema. The same Account Object fields are accepted — <code style="font-family:var(--font-mono);color:var(--teal);">platformId</code>, <code style="font-family:var(--font-mono);color:var(--teal);">safeName</code>, and <code style="font-family:var(--font-mono);color:var(--teal);">platformAccountProperties</code> map 1:1. The ETL pipeline does an EXPORT from source → IMPORT to target with no field-level transformation required for standard platforms.</p>
+    <h4 style="color:var(--cyan);font-family:var(--font-mono);font-size:0.72rem;margin:14px 0 8px;">Target: Keeper — 3-Tier Hierarchy (Structural Delta)</h4>
+    <p style="font-size:0.68rem;color:var(--text-standard);line-height:1.7;margin-bottom:10px;">Keeper uses a 3-tier hierarchy: <code style="font-family:var(--font-mono);color:var(--cyan);">PAM Config → PAM Resource → PAM User</code>. A single CyberArk Account maps to a <code style="font-family:var(--font-mono);color:var(--cyan);">pamUser</code> record linked to a <code style="font-family:var(--font-mono);color:var(--cyan);">pamMachine</code> or <code style="font-family:var(--font-mono);color:var(--cyan);">pamDatabase</code> resource. The cyberark-import tool handles bulk import (~20% of work); the remaining 80% is post-import transformation to build the correct 3-tier linkage. Each CyberArk Safe may become 2 Keeper Shared Folders (one for credentials, one for PAM resources).</p>
 
-    <h4 style="color:var(--amber);font-family:var(--font-mono);font-size:0.72rem;margin:14px 0 8px;">Target: Delinea Secret Server — Structural Delta</h4>
+    <h4 style="color:var(--blue);font-family:var(--font-mono);font-size:0.72rem;margin:14px 0 8px;">Target: Devolutions — Vault Entry Model</h4>
     <table style="width:100%;border-collapse:collapse;font-size:0.65rem;margin-bottom:14px;">
       <thead><tr style="border-bottom:1px solid var(--border);">
         <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">CyberArk Field</th>
-        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Secret Server Field</th>
+        <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Devolutions Field</th>
         <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:600;">Notes</th>
       </thead>
       <tbody>
@@ -442,7 +444,7 @@ function renderGuide() {
 
     <div class="callout amber" style="margin-top:14px;">
       <div class="callout-title">Audit Log Discontinuity</div>
-      CyberArk audit history does <strong>NOT</strong> migrate to Delinea Secret Server. The audit trail restarts at the migration date. For compliance continuity, export and archive CyberArk audit logs before decommissioning — Agent 07 handles this automatically as part of the P7 Close-Out phase.
+      CyberArk audit history does <strong>NOT</strong> migrate to any of the three target platforms (Devolutions, Keeper, MiniOrange). The audit trail restarts at the migration date. For compliance continuity, export and archive CyberArk audit logs before decommissioning — Agent 07 handles this automatically as part of the P7 Close-Out phase.
     </div>
   `) +
 
@@ -458,9 +460,9 @@ function renderGuide() {
       </thead>
       <tbody>
         <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">CPM</td><td style="padding:5px 8px;color:var(--text-standard);">CyberArk PAS (source)</td><td style="padding:5px 8px;color:var(--text-standard);">Reads platform .ini file, connects to target system, generates new password, pushes to vault</td><td style="padding:5px 8px;color:var(--amber);">Paused during FREEZE step, re-enabled after UNFREEZE</td></tr>
-        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--green);">CPM</td><td style="padding:5px 8px;color:var(--text-standard);">Privilege Cloud (target)</td><td style="padding:5px 8px;color:var(--text-standard);">Same CPM component, same .ini platform files — standard platforms carry over directly</td><td style="padding:5px 8px;color:var(--green);">Direct carry-over ✓ — validated by Agent 13 in staging</td></tr>
-        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--amber);">RPC</td><td style="padding:5px 8px;color:var(--text-standard);">Delinea Secret Server</td><td style="padding:5px 8px;color:var(--text-standard);">PowerShell-based Remote Password Changer, one script per Secret Template — no .ini plugin support</td><td style="padding:5px 8px;color:var(--red);">Must be rebuilt per template — Oracle requires Oracle.ManagedDataAccess.Client</td></tr>
-        <tr><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--text-muted);">Native</td><td style="padding:5px 8px;color:var(--text-standard);">Privilege Cloud SaaS targets</td><td style="padding:5px 8px;color:var(--text-standard);">Native rotation via REST API (ServiceNow, Salesforce, Azure AD, etc.)</td><td style="padding:5px 8px;color:var(--text-muted);">New onboarding only — not a migration concern for existing accounts</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--blue);">RDM Agent</td><td style="padding:5px 8px;color:var(--text-standard);">Devolutions (Option A)</td><td style="padding:5px 8px;color:var(--text-standard);">Script-based via Devolutions RDM Agent. Custom rotation scripts per Entry type. No native .ini plugin format.</td><td style="padding:5px 8px;color:var(--amber);">Must be written per platform — Cisco IOS/NX-OS/ASA require custom scripts</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">Gateway</td><td style="padding:5px 8px;color:var(--text-standard);">Keeper (Option B)</td><td style="padding:5px 8px;color:var(--text-standard);">Keeper Gateway handles rotation (~25-30 platforms). Custom scripts for non-standard platforms. Docker container, 4CPU/16GB RAM.</td><td style="padding:5px 8px;color:var(--red);">Cisco network gear (IOS, NX-OS, ASA, Meraki) requires custom Gateway scripts — critical gap for Cisco</td></tr>
+        <tr><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--purple);">Agent</td><td style="padding:5px 8px;color:var(--text-standard);">MiniOrange (Option C)</td><td style="padding:5px 8px;color:var(--text-standard);">MiniOrange Agent handles ~15-20 platforms. Very limited Cisco network gear support.</td><td style="padding:5px 8px;color:var(--red);">Highest gap — most Cisco platform types unsupported natively</td></tr>
       </tbody>
     </table>
 
@@ -474,57 +476,83 @@ function renderGuide() {
 
     <div class="callout teal" style="margin-top:14px;">
       <div class="callout-title">Oracle DB Rotation — CPM vs RPC Detail</div>
-      <strong>CyberArk CPM (source + Privilege Cloud):</strong> Uses the built-in <code style="font-family:var(--font-mono);color:var(--teal);">OracleDB</code> platform with <code style="font-family:var(--font-mono);color:var(--teal);">Process.ini</code> that executes <code style="font-family:var(--font-mono);color:var(--teal);">ALTER USER {username} IDENTIFIED BY {new_password}</code> via the Oracle thin JDBC driver.<br><br>
-      <strong>Delinea RPC:</strong> Must be implemented as a PowerShell script using <code style="font-family:var(--font-mono);color:var(--teal);">Oracle.ManagedDataAccess.Client</code> (.NET managed driver). The script connects to the Oracle listener, executes the same ALTER USER statement, then calls the heartbeat endpoint to confirm success. Agent 13 flags this as a required manual action during P2 Platform Validation.
+      <strong>CyberArk CPM (source):</strong> Uses the built-in <code style="font-family:var(--font-mono);color:var(--teal);">OracleDB</code> platform with <code style="font-family:var(--font-mono);color:var(--teal);">Process.ini</code> that executes <code style="font-family:var(--font-mono);color:var(--teal);">ALTER USER {username} IDENTIFIED BY {new_password}</code> via the Oracle thin JDBC driver.<br><br>
+      <strong>Devolutions (Option A):</strong> Must be implemented as a PowerShell or Python script registered as an RDM Agent rotation script. Uses <code style="font-family:var(--font-mono);color:var(--blue);">Oracle.ManagedDataAccess.Client</code> (.NET managed driver). Agent 13 flags this as required custom work during P2.<br><br>
+      <strong>Keeper (Option B):</strong> Keeper Gateway includes a pre-built Oracle rotation plugin. Requires Gateway node connectivity to Oracle listener port. Validate in staging — Agent 13 checks Oracle template mapping.<br><br>
+      <strong>MiniOrange (Option C):</strong> Oracle rotation requires custom agent script. MiniOrange has no native Oracle.ManagedDataAccess plugin. Manual verification required.
     </div>
   `) +
 
-  _guideSection('Vendor Team\'s RoM for Migration to Delinea', `
-    <p style="margin-bottom:12px;">The vendor SI (System Integration) team provided the following <strong>Rough Order of Magnitude (RoM)</strong> estimate for migrating to Delinea Secret Server. This represents the vendor's projected effort across 6 workstreams spanning 45 sprints.</p>
-    <table style="width:100%;border-collapse:collapse;font-size:0.65rem;">
-      <thead>
-        <tr style="border-bottom:2px solid var(--border);color:var(--text-muted);text-align:left;">
-          <th style="padding:6px 8px;">#</th>
-          <th style="padding:6px 8px;">SI Task</th>
-          <th style="padding:6px 8px;">RoM (p.hours)</th>
-          <th style="padding:6px 8px;">Sprints</th>
-          <th style="padding:6px 8px;">Sprint Range</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${[
-          ['1', 'Review POV, Discovery, Traceability Matrix', '250', '5', 'Sprint 1-5'],
-          ['2', 'Digital Engineering & Experience Workstream', '1,000', '10', 'Sprint 3-13'],
-          ['3', 'Agentification Workstream', '1,000', '10', 'Sprint 5-15'],
-          ['4', 'Testing / QA Workstream', '3,000', 'Throughout', 'Sprint 3-40'],
-          ['5', 'Wave Planning and Rollout Workstream', '4,800', '22', 'Sprint 8-40'],
-          ['6', 'Legacy Retirement Workstream', '2,000', '20', 'Sprint 25-45'],
-        ].map(r => `
-          <tr style="border-bottom:1px solid var(--border-light);">
-            <td style="padding:5px 8px;font-weight:700;color:var(--cyan);font-family:var(--font-mono);">${r[0]}</td>
-            <td style="padding:5px 8px;color:var(--text-bright);">${r[1]}</td>
-            <td style="padding:5px 8px;color:var(--amber);font-family:var(--font-mono);font-weight:600;">${r[2]}</td>
-            <td style="padding:5px 8px;color:var(--text-muted);">${r[3]}</td>
-            <td style="padding:5px 8px;color:var(--teal);font-family:var(--font-mono);">${r[4]}</td>
+  _guideSection('&#x1F3AF; Cisco Vendor Recommendation — Devolutions / Keeper / MiniOrange', `
+    <p style="margin-bottom:12px;font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
+      Cisco is migrating <strong>off CyberArk entirely</strong> (vendor is now owned by a Cisco competitor).
+      Delinea was evaluated and turned down. The three front-runners are assessed below for Cisco's scale of
+      <strong>50,000–250,000 accounts</strong> across Windows, Unix/Linux, databases, cloud IAM, and
+      Cisco-proprietary network gear (IOS, NX-OS, ASA, Meraki, Catalyst).
+    </p>
+
+    <div class="callout teal" style="margin-bottom:16px;">
+      <div class="callout-title" style="color:var(--cyan)">&#x2714; Primary Recommendation: Keeper Security (Option B)</div>
+      <p style="font-size:0.72rem;line-height:1.7;">
+        <strong>Zero-knowledge AES-256-GCM</strong> encryption — server never sees plaintext secrets.<br>
+        <strong>FedRAMP High</strong> authorized (March 2026) — relevant for Cisco government engagements.<br>
+        <strong>KSM (Keeper Secrets Manager)</strong> — 40+ native integrations replace CCP/AAM: Kubernetes, Terraform, Ansible, GitHub Actions, AWS Secrets Manager, Azure Key Vault, Vault-compatible.<br>
+        <strong>KCM (Keeper Connection Manager)</strong> — Apache Guacamole session recording, browser-native, no Windows RDS licensing.<br>
+        <strong style="color:var(--amber)">Key gap:</strong> ~25-30 rotation platforms vs. CyberArk 225+. Cisco IOS/NX-OS/ASA require custom Gateway scripts. Gateway HA cluster required at 250K+ accounts (4 CPU / 16GB per node).
+      </p>
+    </div>
+
+    <div class="callout" style="border-color:var(--blue);background:var(--blue-dim);margin-bottom:16px;">
+      <div class="callout-title" style="color:var(--blue)">&#x25A3; Secondary Recommendation: Devolutions (Option A)</div>
+      <p style="font-size:0.72rem;line-height:1.7;">
+        <strong>Strongest session management</strong> of the three: RDM built-in (RDP, SSH, VNC, 100+ protocols), rich session recording, no extra licensing.<br>
+        <strong>Flat data model</strong> (Vault → Entry) similar to CyberArk — lower structural migration risk than Keeper's 3-tier rebuild.<br>
+        <strong>Mid-market heritage</strong> — validate at 100K+ accounts before committing as sole PAM. Architecture review recommended for Cisco's 250K scale.<br>
+        <strong>Best use:</strong> Session management layer for on-prem/hybrid Cisco infrastructure. Pair with Keeper for secrets/DevOps layer.
+      </p>
+    </div>
+
+    <div class="callout amber" style="margin-bottom:16px;">
+      <div class="callout-title" style="color:var(--amber)">&#x26A0; Complementary Only: MiniOrange (Option C)</div>
+      <p style="font-size:0.72rem;line-height:1.7;">
+        <strong>IAM-native</strong> — best positioned as MFA/SSO enforcement layer on top of Keeper or Devolutions.<br>
+        <strong>Lowest cost</strong> of the three, but PAM feature depth is unproven at Cisco's 250K scale.<br>
+        <strong>Not recommended</strong> as standalone PAM replacement for Cisco's full privileged account estate.<br>
+        <strong>Best use:</strong> MFA front-door for Cisco's identity layer. Not a CyberArk vault replacement.
+      </p>
+    </div>
+
+    <div style="overflow-x:auto;margin-top:16px;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.68rem;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:6px 8px;text-align:left;color:var(--text-muted);">Dimension</th>
+            <th style="padding:6px 8px;color:var(--blue);">Devolutions (A)</th>
+            <th style="padding:6px 8px;color:var(--cyan);">Keeper (B) &#x2713;</th>
+            <th style="padding:6px 8px;color:var(--purple);">MiniOrange (C)</th>
           </tr>
-        `).join('')}
-        <tr style="border-top:2px solid var(--border);font-weight:700;">
-          <td style="padding:6px 8px;"></td>
-          <td style="padding:6px 8px;color:var(--text-bright);">Total Effort</td>
-          <td style="padding:6px 8px;color:var(--red);font-family:var(--font-mono);font-size:0.75rem;">12,050</td>
-          <td colspan="2" style="padding:6px 8px;color:var(--text-muted);">45 sprints</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="callout amber" style="margin-top:14px;font-size:0.68rem;line-height:1.6;">
-      <div class="callout-title" style="font-size:0.72rem;">Key Observations</div>
-      <ul style="margin:0;padding-left:18px;line-height:2;">
-        <li><strong>Testing/QA</strong> is the largest workstream at 3,000 hours, running nearly the entire project (Sprint 3-40)</li>
-        <li><strong>Wave Planning and Rollout</strong> consumes 4,800 hours — the most resource-intensive phase of the migration</li>
-        <li><strong>Agentification</strong> (1,000 hours) covers the AI-driven automation buildout for the migration tooling</li>
-        <li><strong>Legacy Retirement</strong> (2,000 hours) begins at Sprint 25 and extends to Sprint 45, covering decommission and cutover</li>
-        <li>Total effort of <strong>12,050 person-hours</strong> across 45 sprints reflects the scale and complexity of a cross-vendor PAM migration</li>
-      </ul>
+        </thead>
+        <tbody>
+          ${[
+            ['Timeline', '44 weeks', '36 weeks', '32 weeks'],
+            ['Zero-Knowledge', '✗ Server-side', '✓ AES-256-GCM', '✗ Server-side'],
+            ['FedRAMP', '✗ None', '✓ High (March 2026)', '✗ None'],
+            ['Session Mgmt', '✓ RDM (strongest)', '✓ KCM (Guacamole)', '⚠ Basic only'],
+            ['DevOps/NHI', '⚠ REST API only', '✓ KSM 40+ integrations', '✗ REST API only'],
+            ['Cisco Network Gear', '⚠ Custom scripts', '⚠ Custom Gateway scripts', '✗ Very limited'],
+            ['Scale at 250K', '⚠ Validate needed', '⚠ HA Gateway cluster', '✗ Untested'],
+            ['Permission Loss', '22→Vault roles', '22→4 axes', '22→3 levels (most loss)'],
+            ['Audit Continuity', '✗ Manual export', '✗ Manual export', '✗ Manual export'],
+            ['Recommendation', 'SESSION LAYER', 'PRIMARY PAM', 'MFA/SSO ONLY'],
+          ].map(row => `
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:5px 8px;font-weight:600;color:var(--text-bright)">${row[0]}</td>
+              <td style="padding:5px 8px;color:var(--text-standard)">${row[1]}</td>
+              <td style="padding:5px 8px;color:var(--text-standard)">${row[2]}</td>
+              <td style="padding:5px 8px;color:var(--text-standard)">${row[3]}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
     </div>
   `) +
 
@@ -533,18 +561,23 @@ function renderGuide() {
       ${[
         ['NHI', 'Non-Human Identity — service accounts, API keys, SSH keys, certificates used by applications'],
         ['CPM', 'Central Policy Manager — CyberArk component that rotates passwords on schedule'],
-        ['RPC', 'Remote Password Changing — Secret Server equivalent of CPM'],
+        ['RDM Agent', 'Devolutions Remote Desktop Manager rotation agent — equivalent of CyberArk CPM'],
+        ['KSM', 'Keeper Secrets Manager — DevOps secrets distribution, replaces CCP/AAM'],
+        ['KCM', 'Keeper Connection Manager — session recording platform (Apache Guacamole), replaces PSM'],
+        ['Gateway', 'Keeper Gateway Docker container — handles rotation + session proxy for Keeper'],
         ['PVWA', 'Password Vault Web Access — CyberArk web management interface'],
         ['Safe', 'CyberArk container for privileged accounts with access controls'],
-        ['Folder', 'Secret Server container equivalent to CyberArk Safe'],
-        ['Template', 'Secret Server schema defining fields for a credential type'],
+        ['Vault', 'Devolutions Server container equivalent to CyberArk Safe'],
+        ['pamUser', 'Keeper credential record — linked to pamMachine or pamDatabase in 3-tier hierarchy'],
+        ['pamMachine', 'Keeper resource record for servers/endpoints in PAM hierarchy'],
+        ['Resource Group', 'MiniOrange container equivalent to CyberArk Safe'],
         ['Platform', 'CyberArk definition of how to manage a specific system type'],
         ['ETL', 'Extract-Transform-Load — the core migration pipeline pattern'],
         ['MCP', 'Model Context Protocol — standard for AI model tool integration'],
         ['CCP', 'Central Credential Provider — CyberArk passwordless application auth'],
         ['AAM', 'Application Access Manager — CyberArk enterprise app integration'],
         ['PSM', 'Privileged Session Manager — CyberArk session recording/proxy'],
-        ['StrongDM', 'Infrastructure access platform often paired with Secret Server'],
+        ['PAM Config', 'Keeper top-level container that groups PAM resources for a given system/environment'],
         ['Gate', 'Human approval checkpoint required before phase advancement'],
         ['Yellow Checkpoint', 'AI-detected condition requiring contextual evaluation'],
         ['Heartbeat', 'Automated check that a migrated account can still authenticate'],

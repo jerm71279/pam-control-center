@@ -9,7 +9,7 @@ async function renderGateTracker() {
 
   document.getElementById('gateTimeline').innerHTML = gates.map(g => {
     const contextText = option === 'b' ? g.context_b : g.context_a;
-    const contextLabel = option === 'b' ? 'CyberArk Cloud Context' : 'Delinea Context';
+    const contextLabel = option === 'c' ? 'MiniOrange Context' : option === 'b' ? 'Keeper Context' : 'Devolutions Context';
     const inputs = g.inputs || [];
     const unlocks = g.unlocks || '';
 
