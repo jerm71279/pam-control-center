@@ -7,7 +7,7 @@ _now = datetime.now(timezone.utc)
 
 _CB_DATA = {
     "cyberark_pvwa": {
-        "label":                   "CyberArk PVWA",
+        "label":                   "CyberArk PVWA (Source)",
         "state":                   "CLOSED",
         "failure_count":           0,
         "last_trip":               None,
@@ -18,32 +18,33 @@ _CB_DATA = {
         "avg_latency_ms":          142,
         "half_open_probes":        0,
     },
-    "cyberark_conjur": {
-        "label":                   "CyberArk Conjur",
+    "devolutions_server": {
+        "label":                   "Devolutions Server (Option A)",
         "state":                   "CLOSED",
         "failure_count":           0,
         "last_trip":               None,
         "recovery_at":             None,
         "fallback_strategy":       "PAUSE_WAVE",
         "call_count_rolling":      1204,
-        "error_rate_pct":          0.2,
-        "avg_latency_ms":          89,
+        "error_rate_pct":          1.2,
+        "avg_latency_ms":          198,
         "half_open_probes":        0,
     },
-    "delinea_secret_server": {
-        "label":                   "Delinea Secret Server",
+    "keeper_cloud": {
+        "label":                   "Keeper Cloud API (Option B)",
         "state":                   "HALF_OPEN",
         "failure_count":           3,
         "last_trip":               (_now - timedelta(minutes=4, seconds=12)).isoformat(),
         "recovery_at":             (_now + timedelta(seconds=48)).isoformat(),
         "fallback_strategy":       "SINGLE_AGENT_MODE",
         "call_count_rolling":      892,
-        "error_rate_pct":          12.4,
-        "avg_latency_ms":          3820,
+        "error_rate_pct":          8.1,
+        "avg_latency_ms":          2140,
         "half_open_probes":        1,
+        "notes":                   "HTTP 403 throttle (NOT 429) — cumulative window. Max 50 calls/min. Batch in groups of 10 with 2s pause.",
     },
-    "strongdm": {
-        "label":                   "StrongDM",
+    "miniorange_pam": {
+        "label":                   "MiniOrange PAM API (Option C)",
         "state":                   "CLOSED",
         "failure_count":           0,
         "last_trip":               None,
@@ -51,7 +52,7 @@ _CB_DATA = {
         "fallback_strategy":       "HUMAN_IN_LOOP",
         "call_count_rolling":      289,
         "error_rate_pct":          0.0,
-        "avg_latency_ms":          54,
+        "avg_latency_ms":          321,
         "half_open_probes":        0,
     },
 }

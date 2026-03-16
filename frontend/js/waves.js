@@ -136,18 +136,48 @@ async function viewWaveDetail(waveId) {
 }
 
 function renderHeartbeatChecks() {
-  const isOptB = API.option === 'b';
+  const opt = API.option;
   const checks = [
     { name: 'Count Comparison', msg: '2847 source = 2847 target (0.0% variance)', status: 'pass' },
     { name: 'Heartbeat Status', msg: '2705/2847 verified (95.0%)', status: 'pass' },
-    { name: 'Permission Mapping', msg: isOptB ? '22→22 parity verified, 0 exceptions' : '22→4 role mapping verified, 0 exceptions', status: 'pass' },
-    { name: isOptB ? 'Safe Structure' : 'Folder Structure', msg: isOptB ? '142 safes created in Privilege Cloud' : '142 folders created, hierarchy correct', status: 'pass' },
+    {
+      name: 'Permission Mapping',
+      msg: opt === 'b' ? '22→4 axes verified, 3 escalation flags reviewed' :
+           opt === 'c' ? '22→3 levels verified, 5 escalation flags reviewed' :
+           '22→Vault roles verified, 2 escalation flags reviewed',
+      status: 'pass',
+    },
+    {
+      name: opt === 'b' ? 'Shared Folder / PAM Hierarchy' : opt === 'c' ? 'Resource Group Structure' : 'Vault Structure',
+      msg: opt === 'b' ? '142 shared folders + PAM hierarchy created (pamUser/pamMachine/pamDatabase)' :
+           opt === 'c' ? '142 resource groups created, hierarchy correct' :
+           '142 vaults created in Devolutions Server, hierarchy correct',
+      status: 'pass',
+    },
     { name: 'Metadata Integrity', msg: 'All description/custom fields preserved', status: 'pass' },
     { name: 'Group Assignments', msg: '234 group memberships translated', status: 'pass' },
-    { name: 'Password Policies', msg: isOptB ? 'Cloud CPM rotation active per platform' : 'Rotation policies applied per template', status: 'pass' },
-    { name: 'Access Patterns', msg: '0 unexpected permission escalations', status: 'pass' },
-    { name: 'Audit Continuity', msg: isOptB ? 'Audit logs migrated to Privilege Cloud' : 'Audit entries present for all accounts', status: 'pass' },
-    { name: 'Recording Preservation', msg: isOptB ? 'PSM recordings transferred to cloud storage' : 'Manual verification required in P7', status: isOptB ? 'pass' : 'warn' },
+    {
+      name: 'Password Policies',
+      msg: opt === 'b' ? 'Keeper Gateway rotation active per platform (~25-30 platforms covered)' :
+           opt === 'c' ? 'MiniOrange rotation policies applied per resource group' :
+           'Devolutions RDM Agent rotation active per entry type',
+      status: 'pass',
+    },
+    { name: 'Access Patterns', msg: '0 unexpected permission escalations detected', status: 'pass' },
+    {
+      name: 'Audit Continuity',
+      msg: opt === 'b' ? 'CyberArk audit archived read-only; Keeper event log active' :
+           opt === 'c' ? 'CyberArk audit archived read-only; MiniOrange basic audit active' :
+           'CyberArk audit archived read-only; Devolutions audit log active',
+      status: 'warn',
+    },
+    {
+      name: 'Recording Preservation',
+      msg: opt === 'b' ? 'CyberArk PSM archived; KCM (Guacamole) session recording active going forward' :
+           opt === 'c' ? 'CyberArk PSM archived; MiniOrange limited recording — manual verification required' :
+           'CyberArk PSM archived; RDM session recording active going forward',
+      status: opt === 'c' ? 'warn' : 'pass',
+    },
   ];
 
   document.getElementById('heartbeatChecks').innerHTML = checks.map(c => `
