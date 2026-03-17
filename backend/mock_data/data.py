@@ -687,6 +687,12 @@ GATES = [
         "unlocks": "Phase 1: Discovery & Analysis \u2014 Enables 6 AI agents to scan the source CyberArk vault and map all accounts, permissions, integrations, and non-human identities.",
         "context_a": "Devolutions: Provision Devolutions Server and configure RDM Agent + Devolutions Gateway. Validate connectivity to Cisco network segments.",
         "context_b": "Keeper: Deploy Keeper Gateway (Docker) nodes per network segment. Configure KCM for session management. Keeper Cloud is SaaS — no infrastructure to manage on target side.",
+        "sod": {
+            "iOPEX": "Presents migration plan, configures orchestration VM, runs preflight connectivity checks against CyberArk PVWA and target endpoints",
+            "cisco": "Exec Sponsor authorizes scope, budget, and timeline. NOC/Infra independently confirms VM provisioning and network segments are ready.",
+            "rule": "Cisco must independently authorize engagement start and confirm environment readiness before iOPEX has write access to any system",
+            "blocker": "iOPEX cannot self-authorize scope, timeline, or resource allocation — Exec Sponsor sign-off required before work begins",
+        },
     },
     {
         "id": "g2", "name": "NHI Classification Review", "phase": "p1", "week": 15, "week_b": 10,
@@ -698,6 +704,12 @@ GATES = [
         "unlocks": "Remainder of Phase 1 discovery. Validated NHI data feeds into wave planning \u2014 NHIs go in Wave 3 (dedicated wave with coordinated rotation).",
         "context_a": "Devolutions: NHI rotation must be re-implemented using RDM Agent rotation scripts. Cisco service account rotation needs custom scripts per device type (IOS, NX-OS, ASA).",
         "context_b": "Keeper: NHI rotation handled via Keeper Gateway (~25-30 platforms). Cisco-specific NHI rotation (IOS, NX-OS) requires custom Gateway scripts — flag these for Agent 12 review.",
+        "sod": {
+            "iOPEX": "Runs Agents 01, 09, 12 to produce NHI classification report and dependency graph. Flags high and low-confidence classifications for human review.",
+            "cisco": "Application Owners must confirm each NHI belongs to their system and validate dependency chains. 5-business-day acknowledgment window.",
+            "rule": "NHI ownership can only be confirmed by the team that owns the application — the migration team cannot assert ownership on their behalf",
+            "blocker": "iOPEX cannot mark NHI owners as confirmed — each App Owner must individually acknowledge their service accounts",
+        },
     },
     {
         "id": "g3", "name": "Discovery Sign-off", "phase": "p1", "week": 18, "week_b": 12,
@@ -709,6 +721,12 @@ GATES = [
         "unlocks": "Phase 2: Infrastructure & Staging \u2014 Enables provisioning of the target environment and Agent 10 staging validation with 100 sample accounts.",
         "context_a": "Devolutions: SMEs must review Vault role mapping loss. Agent 02 flags 9 CyberArk permissions that cannot translate to Devolutions roles. Business owners must sign off on accepted risk.",
         "context_b": "Keeper: SMEs must review the 22→4 boolean axes mapping. Agent 02 flags 12 permissions with no Keeper equivalent. Critical: Keeper's 3-tier hierarchy means post-import transform accuracy must be validated.",
+        "sod": {
+            "iOPEX": "Delivers all P1 discovery deliverables: discovery manifest, dependency graph, NHI classifications, gap analysis, permission audit. Presents findings.",
+            "cisco": "Compliance independently reviews gap analysis results and accepts or rejects risk. Exec Sponsor approves full scope before P2 budget commitment. Security Architect signs off on permission loss findings.",
+            "rule": "Permission loss findings and compliance gaps must be accepted by Cisco Compliance and Security — the migration integrator cannot accept compliance risk on Cisco's behalf",
+            "blocker": "iOPEX cannot approve their own gap analysis or accept compliance findings — independent Cisco Compliance sign-off is mandatory before Phase 2",
+        },
     },
     {
         "id": "g4", "name": "Staging Approval", "phase": "p2", "week": 28, "week_b": 18,
@@ -720,6 +738,12 @@ GATES = [
         "unlocks": "Phase 3: Structure Migration \u2014 Enables creation of the organizational structure (safes/folders, permissions, platform assignments) in the target.",
         "context_a": "Devolutions: Staging validates Devolutions Vault creation and role mapping. Custom Entry types for Cisco network gear (IOS/NX-OS/ASA) must be verified in staging.",
         "context_b": "Keeper: Staging validates Keeper Shared Folder creation, PAM hierarchy build, and post-import transform accuracy. Keeper Gateway heartbeat for ~25 platforms must pass staging assertions.",
+        "sod": {
+            "iOPEX": "Runs Agent 10 staging validation — 10-assertion mini-ETL with 100 sample accounts. Documents all assertion results and staging environment configuration.",
+            "cisco": "NOC/Infra confirms staging environment is representative of production topology, network paths, and system versions — only the infrastructure team can make this declaration.",
+            "rule": "Infrastructure team must independently confirm staging reflects production — iOPEX cannot assess whether a Cisco environment is production-representative",
+            "blocker": "iOPEX cannot declare staging 'production-ready' — NOC/Infra must independently validate the environment",
+        },
     },
     {
         "id": "g5", "name": "Structure Approval", "phase": "p3", "week": 38, "week_b": 22,
@@ -731,6 +755,12 @@ GATES = [
         "unlocks": "Phase 4: Pilot Migration \u2014 Enables a 50-account pilot migration to validate the full ETL pipeline end-to-end with real production accounts.",
         "context_a": "Devolutions: Escalation flags require individual review. Devolutions Vault role mapping may grant broader permissions than source — human sign-off required before production.",
         "context_b": "Keeper: Escalation flags from 4-axis boolean mapping require review. 3-tier PAM hierarchy structure must be verified correct before production waves — errors here compound at scale.",
+        "sod": {
+            "iOPEX": "Runs Agent 03 permission mapping. Produces escalation report showing all permission losses, escalations, and risk cases.",
+            "cisco": "Security Architect MUST independently review every escalation flag. PAM Owner confirms safe membership accuracy before mapping is locked. CAB approves pilot CHG.",
+            "rule": "PCI-DSS 7.1 dual-control requirement: the team that performs permission mapping cannot also approve it. Cisco Security must independently sign off on all escalations.",
+            "blocker": "iOPEX cannot approve the permission mapping output — this is a PCI-DSS 7.1 violation. Cisco Security Architect sign-off is mandatory and non-delegable",
+        },
     },
     {
         "id": "g6", "name": "Pilot Results Approval", "phase": "p4", "week": 46, "week_b": 28,
@@ -742,6 +772,12 @@ GATES = [
         "unlocks": "Phase 5: Production Waves \u2014 Enables the 5-wave migration of all 2,847 accounts. This is the point of no return for the migration strategy.",
         "context_a": "Devolutions: Pilot validates the Devolutions Server + RDM Agent integration under real conditions. App owners confirm the new credential retrieval workflow (Devolutions REST API).",
         "context_b": "Keeper: Pilot validates Keeper Gateway rotation and KSM SDK credential retrieval. App owners confirm new KSM-based workflow. Critical: validate post-import transform accuracy on pilot accounts.",
+        "sod": {
+            "iOPEX": "Executes 50-account pilot ETL, presents heartbeat results (>95% required), and demonstrates rollback procedure. Provides evidence package.",
+            "cisco": "App Owners must physically log into the target system and confirm their credentials work. Exec Sponsor authorizes opening production waves based on pilot evidence.",
+            "rule": "Application owners must personally verify their workflows function in the target — iOPEX cannot certify application functionality on behalf of the teams that use these credentials",
+            "blocker": "iOPEX cannot confirm that applications work in the target system — only the application owner can make that declaration. No production waves begin without App Owner confirmation.",
+        },
     },
     {
         "id": "g7", "name": "Wave 1 Approval", "phase": "p5", "week": 50, "week_b": 32,
@@ -753,6 +789,12 @@ GATES = [
         "unlocks": "Wave 2 \u2014 Infrastructure accounts (domain admins, service controllers) can proceed.",
         "context_a": "Devolutions: Validates Vault creation and Entry type mapping at scale for the first time. Cisco standard Windows/Linux accounts migrated here.",
         "context_b": "Keeper: Validates Keeper Shared Folder creation and PAM hierarchy build at production scale. Post-import transform must succeed at batch volume.",
+        "sod": {
+            "iOPEX": "Executes Wave 1 ETL (698 standard accounts), monitors Agent 04/05/18 results, presents validation report.",
+            "cisco": "App Owners confirm standard Windows/Linux accounts are accessible and functional in the target. CAB reviews wave change request.",
+            "rule": "Wave completion is declared by the account owners, not the team that ran the migration — independent confirmation required for every wave",
+            "blocker": "iOPEX cannot declare a wave complete without independent App Owner confirmation of account access in the target",
+        },
     },
     {
         "id": "g8", "name": "Wave 2 Approval", "phase": "p5", "week": 53, "week_b": 34,
@@ -764,6 +806,12 @@ GATES = [
         "unlocks": "Wave 3 \u2014 Non-Human Identity (NHI) accounts, the highest-risk wave, can proceed.",
         "context_a": "Devolutions: Domain admin account rotation verified through RDM Agent scripts. Active Directory integration confirmed working with Devolutions Server.",
         "context_b": "Keeper: Domain admin rotation handled by Keeper Gateway (Windows Domain platform). KCM session recording verified for domain admin access.",
+        "sod": {
+            "iOPEX": "Executes Wave 2 ETL (498 infrastructure/domain accounts), monitors domain admin rotation results.",
+            "cisco": "NOC/Infra independently verifies domain controllers and critical services are functioning normally post-migration. DBA team confirms database service account access.",
+            "rule": "Infrastructure credential verification must be performed by the infrastructure team — only NOC/Infra can confirm their systems are healthy",
+            "blocker": "iOPEX cannot confirm domain admin access works in Cisco's infrastructure — that declaration belongs to NOC/Infra",
+        },
     },
     {
         "id": "g9", "name": "Wave 3 Approval", "phase": "p5", "week": 56, "week_b": 36,
@@ -775,6 +823,12 @@ GATES = [
         "unlocks": "Wave 4 \u2014 CCP/AAM integration accounts (accounts used by applications via API) can proceed.",
         "context_a": "Devolutions: NHI rotation strategies must be reimplemented using RDM Agent rotation scripts. Cisco service account types require custom scripts per NHI subtype.",
         "context_b": "Keeper: NHI rotation via Keeper Gateway. Custom Gateway scripts required for Cisco-specific NHI types (IOS devices, ASA accounts). Validate each NHI subtype rotation in staging before Wave 3.",
+        "sod": {
+            "iOPEX": "Executes Wave 3 ETL (554 NHI accounts), verifies rotation policies are configured in target, notifies all NHI owners.",
+            "cisco": "Each NHI App Owner has 48 hours to confirm automated systems function. Compliance independently verifies rotation policies are active — SOX dual-control applies.",
+            "rule": "SOX Section 404 dual-control: the team that migrates NHI credentials cannot also certify that rotation policies are correctly configured. Independent Compliance verification required.",
+            "blocker": "iOPEX cannot certify rotation policy correctness — Compliance must independently verify. The same team cannot both perform and approve a control under SOX.",
+        },
     },
     {
         "id": "g10", "name": "Wave 4 Approval", "phase": "p5", "week": 59, "week_b": 38,
@@ -786,6 +840,12 @@ GATES = [
         "unlocks": "Wave 5 \u2014 Remaining accounts (cloud credentials, misc) and final reconciliation.",
         "context_a": "Devolutions: Full application re-architecture required. CCP/AAM calls replaced with Devolutions REST API + RDM Agent SDK. Agent 06 generates replacement code in Python, Java, C#, PowerShell.",
         "context_b": "Keeper: Full re-architecture required. CCP/AAM replaced with KSM SDK — 40+ native integrations available. Agent 06 generates KSM SDK replacement packages. Highest value wave for Keeper's DevOps story.",
+        "sod": {
+            "iOPEX": "Runs Agent 06 integration repointing, deploys KSM SDK or Devolutions REST replacement code per application. Hands off to Cisco dev teams for validation.",
+            "cisco": "Dev Leads independently validate that their application code changes work correctly in production. App Owners confirm end-to-end application functionality.",
+            "rule": "Integration code deployed to Cisco production systems requires Cisco developer sign-off — the integration partner cannot approve code changes in the client's production environment",
+            "blocker": "iOPEX cannot approve production application code deployments at Cisco — each Cisco Dev Lead must independently sign off on their application",
+        },
     },
     {
         "id": "g11", "name": "Production Complete", "phase": "p5", "week": 62, "week_b": 40,
@@ -797,6 +857,12 @@ GATES = [
         "unlocks": "Phase 6: Parallel Running & Cutover \u2014 Enables dual-backend operation where traffic gradually shifts from source to target.",
         "context_a": "Devolutions: Compliance evidence includes documentation of 9 lost permissions and risk acceptances. Integration registry shows 34 repointed CCP/AAM applications.",
         "context_b": "Keeper: Compliance evidence includes 12 lost-permission risk acceptances and 3-tier hierarchy accuracy audit. KSM SDK integrations replace all CCP/AAM applications.",
+        "sod": {
+            "iOPEX": "Produces final reconciliation report (source count = target count), compiles compliance evidence packages for PCI-DSS, NIST 800-53, HIPAA, and SOX.",
+            "cisco": "Compliance independently verifies source count matches target count and all evidence packages are complete. PAM Owner confirms no accounts are missing.",
+            "rule": "Migration completeness is declared by Cisco Compliance, not the migration integrator — independent verification of the final state is a compliance requirement",
+            "blocker": "iOPEX cannot declare migration complete — Compliance must independently verify account completeness and evidence package integrity",
+        },
     },
     {
         "id": "g12", "name": "Integration Cutover", "phase": "p6", "week": 69, "week_b": 44,
@@ -808,6 +874,12 @@ GATES = [
         "unlocks": "Cutover Approval (G13) \u2014 Enables the final source-to-target cutover decision.",
         "context_a": "Devolutions: 34 integration packages must be individually verified. Each uses the Devolutions REST API pattern replacing the original CyberArk CCP/AAM call.",
         "context_b": "Keeper: 34 KSM SDK integration packages must be individually verified. Each uses KSM SDK replacing CCP/AAM — feature flags toggle between source and Keeper endpoints.",
+        "sod": {
+            "iOPEX": "Produces integration cutover registry, maintains rollback readiness, supports each application team through their cutover confirmation.",
+            "cisco": "Dev Leads individually sign off per application. App Owners confirm production applications are fully operational on the target system.",
+            "rule": "Production application cutover decisions belong to the application team — the integrator enables the cutover but cannot authorize it",
+            "blocker": "iOPEX cannot authorize a Cisco production application to cut over — each application team owns their go/no-go decision",
+        },
     },
     {
         "id": "g13", "name": "Cutover Approval", "phase": "p6", "week": 76, "week_b": 48,
@@ -819,6 +891,12 @@ GATES = [
         "unlocks": "Phase 7: Decommission \u2014 Enables shutdown of source infrastructure and project close-out.",
         "context_a": "Devolutions: Parallel-run validated traffic shifting from CyberArk to Devolutions Server + RDM over 14 weeks. 7 discrepancies detected and resolved.",
         "context_b": "Keeper: Parallel-run validated traffic shifting from CyberArk to Keeper over 8 weeks. KSM SDK and KCM session recording validated at production load.",
+        "sod": {
+            "iOPEX": "Presents parallel-run metrics, final validation report, and complete evidence packages. Executes source set-to-read-only on explicit authorization.",
+            "cisco": "CAB authorizes the change. Exec Sponsor provides program-level authorization. Compliance confirms evidence packages are complete and audit-ready.",
+            "rule": "Point-of-no-return gate: iOPEX presents the case but has zero approval authority. All three Cisco approvers (CAB, Exec Sponsor, Compliance) must independently authorize.",
+            "blocker": "iOPEX cannot set the source CyberArk to read-only without explicit CAB + Exec Sponsor approval. This is the highest-authority gate in the program.",
+        },
     },
     {
         "id": "g14", "name": "Final Sign-off", "phase": "p7", "week": 80, "week_b": 50,
@@ -830,6 +908,12 @@ GATES = [
         "unlocks": "Project Complete \u2014 Migration is finished. Operations team takes ownership of the target PAM platform.",
         "context_a": "Devolutions: CyberArk vault retained read-only for audit. 8 servers decommissioned ($184K/year savings). Operations trained on Devolutions Server + RDM administration.",
         "context_b": "Keeper: CyberArk vault retained read-only for audit. 8 servers decommissioned ($184K/year savings). Operations trained on Keeper Admin Console + KCM administration.",
+        "sod": {
+            "iOPEX": "Executes decommission runbook, archives audit logs, delivers ops knowledge transfer documentation and runbooks. iOPEX engagement ends at this gate.",
+            "cisco": "Operations formally accepts ownership of the target PAM platform. Compliance confirms audit retention is in place. Exec Sponsor closes the program.",
+            "rule": "Cisco Operations must formally accept platform ownership before iOPEX engagement ends — the client, not the integrator, declares the migration complete and assumes operational responsibility",
+            "blocker": "iOPEX cannot decommission Cisco infrastructure without explicit authorization. Operations ownership acceptance is required — iOPEX cannot transfer ownership to themselves.",
+        },
     },
     {
         "id": "g15", "name": "SHIFT Architecture Review", "phase": "shift", "week": 20, "week_b": 12,
@@ -841,6 +925,12 @@ GATES = [
         "unlocks": "SHIFT Portal Development \u2014 Enables building the Spring Boot developer portal with vendor-agnostic adapter layer.",
         "context_a": "Devolutions: Adapter maps to Devolutions REST API + RDM Agent SDK for session proxy.",
         "context_b": "Keeper: Adapter maps to Keeper REST API + KSM SDK + KCM for session proxy.",
+        "sod": {
+            "iOPEX": "Presents PamVendorAdapter interface contract, OpenAPI spec, and deployment topology design.",
+            "cisco": "Architecture Board independently reviews and approves the technical design. Security reviews the adapter security model.",
+            "rule": "Architecture decisions for Cisco's developer portal must be approved by Cisco's Architecture Board — the integrator proposes, the client approves",
+            "blocker": "iOPEX cannot approve their own architecture design for Cisco's production portal",
+        },
     },
     {
         "id": "g16", "name": "SHIFT MVP Walkthrough", "phase": "shift", "week": 34, "week_b": 22,
@@ -852,6 +942,12 @@ GATES = [
         "unlocks": "SHIFT Production Deployment \u2014 Enables hardening, load testing, and production deployment of the developer portal.",
         "context_a": "Devolutions: MVP demonstrates Devolutions Server credential checkout and RDM session recording.",
         "context_b": "Keeper: MVP demonstrates Keeper Vault credential checkout and KCM session recording.",
+        "sod": {
+            "iOPEX": "Demonstrates the portal MVP: login flow, secret browsing, credential checkout, audit log viewing.",
+            "cisco": "PAM Engineer and UX stakeholders validate the developer workflow meets Cisco's requirements. UX sign-off confirms usability.",
+            "rule": "Product acceptance belongs to the client — Cisco stakeholders must independently validate the portal meets their requirements",
+            "blocker": "iOPEX cannot sign off on their own deliverable — Cisco PAM Engineer and UX must independently validate",
+        },
     },
     {
         "id": "g17", "name": "SHIFT Production Cutover", "phase": "shift", "week": 74, "week_b": 46,
@@ -863,6 +959,12 @@ GATES = [
         "unlocks": "SHIFT Portal Live \u2014 Developers can use the self-service portal for credential management.",
         "context_a": "Devolutions: Portal connects to Devolutions Server + RDM Agent in production. Load tested with 500 concurrent developer sessions.",
         "context_b": "Keeper: Portal connects to Keeper Vault + KCM in production. Load tested with 500 concurrent developer sessions.",
+        "sod": {
+            "iOPEX": "Executes production deployment, confirms all adapters are green, presents load test and security scan results.",
+            "cisco": "Operations confirms SLA commitments are acceptable. Security independently validates no vulnerabilities in production.",
+            "rule": "Production portal security sign-off belongs to Cisco Security — the integrator cannot certify the security posture of a system they built",
+            "blocker": "iOPEX cannot approve the security posture of their own product for Cisco production deployment — independent Security sign-off required",
+        },
     },
 ]
 

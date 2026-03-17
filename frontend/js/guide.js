@@ -556,6 +556,94 @@ function renderGuide() {
     </div>
   `) +
 
+  _guideSection('&#x1F512; Separation of Duties — iOPEX as Migration Integrator', `
+    <p style="margin-bottom:14px;font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
+      iOPEX operates as the migration integrator throughout all phases — building, operating, and running the
+      15-agent orchestration platform. Cisco retains accountability for every approval gate.
+      The core principle is simple: <strong>the team that performs the work cannot also sign off on it.</strong>
+      This is enforced mechanically through Agent 08 gate logic and is visible on every gate card in the Gate Tracker tab.
+    </p>
+
+    <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;">The 6 Core Separation Rules</div>
+
+    <div style="display:grid;gap:8px;margin-bottom:20px;">
+      ${[
+        ['1', 'var(--purple)', 'iOPEX Runs — Cisco Approves Every Gate',
+         'iOPEX Migration Engineers execute all agent runs, ETL waves, and deliverable production. No gate in the program can be approved by iOPEX. Every gate requires a named Cisco approver who is independent of the team that performed the work. This applies from g1 (Kick-off) through g14 (Final Sign-off).',
+         'Agent 08 enforces this mechanically — a gate cannot reach APPROVED status without the required Cisco approver roles signing off.'],
+
+        ['2', 'var(--red)', 'Permission Mapping Approval is Cisco Security Only (PCI-DSS 7.1)',
+         'Agent 03 produces the permission escalation and loss report. iOPEX has zero approval authority over this output. Cisco Security Architect must independently review every escalation flag before Phase 3 proceeds. This is a PCI-DSS Requirement 7.1 dual-control: the team that performs a control cannot also approve it.',
+         'Gate g5 (Structure Approval) hard-blocks Phase 4 until Cisco Security sign-off is recorded. No delegation to iOPEX is permitted under any circumstances.'],
+
+        ['3', 'var(--amber)', 'NHI Ownership Can Only Be Declared by App Owners',
+         'iOPEX agents classify non-human identities using platform signals, name patterns, and safe name patterns. AI confidence scores are indicators, not declarations. Only the application team that owns the workload can confirm that a service account belongs to them and that its dependency chains are complete.',
+         'Gate g2 (NHI Classification Review) requires individual App Owner acknowledgment within 5 business days. iOPEX cannot mark NHI owners as confirmed on their behalf.'],
+
+        ['4', 'var(--cyan)', 'Application Functionality is Declared by App Owners — Not iOPEX',
+         'After each wave and at the pilot gate (g6), iOPEX provides heartbeat success rates and integrity check results. These are technical metrics — they confirm the credential exists and rotates. They do not confirm the application works. Only the application owner can confirm their end-to-end workflow functions in the target system.',
+         'Pilot gate g6 is a hard block on all production waves. App Owners must physically verify access in the target. iOPEX heartbeat results are necessary but not sufficient.'],
+
+        ['5', 'var(--red)', 'SOX Dual-Control on NHI Rotation Certification (Wave 3)',
+         'Wave 3 migrates 554 NHI accounts and configures rotation policies in the target. The team that configures a control (iOPEX setting rotation policies) cannot also certify that the control is operating correctly. Cisco Compliance must independently verify rotation policies are active at gate g9.',
+         'SOX Section 404 requires dual-control for credential management operations. Gate g9 requires Compliance sign-off in addition to App Owner confirmation. iOPEX cannot satisfy both roles.'],
+
+        ['6', 'var(--red)', 'Point-of-No-Return (g13) Requires Maximum Cisco Authority — iOPEX Has Zero Approval Power',
+         'Gate g13 (Cutover Approval) sets the source CyberArk vault to read-only — the last reversible step before decommission. iOPEX presents the evidence: parallel-run metrics, final validation report, all App Owner sign-offs, and compliance packages. iOPEX then waits. All three independent Cisco approvers (CAB, Exec Sponsor, Compliance) must authorize before iOPEX executes the read-only switch.',
+         'This is the highest-authority gate in the program. If any approver is unavailable or withholds approval, the migration pauses. iOPEX cannot proceed based on partial approvals or verbal authorization.'],
+
+      ].map(([num, color, title, body, enforcement]) => `
+        <div style="padding:14px 16px;background:var(--bg-surface);border:1px solid var(--border);border-left:4px solid ${color};border-radius:4px;">
+          <div style="display:flex;gap:10px;align-items:baseline;margin-bottom:7px;">
+            <div style="font-family:var(--font-mono);font-size:0.65rem;color:${color};font-weight:800;min-width:16px;">${num}</div>
+            <div style="font-size:0.7rem;font-weight:700;color:var(--text-bright);line-height:1.4;">${title}</div>
+          </div>
+          <div style="font-size:0.67rem;color:var(--text-standard);line-height:1.75;margin-bottom:8px;padding-left:26px;">${body}</div>
+          <div style="margin-left:26px;padding:6px 10px;background:var(--bg-base);border-left:2px solid ${color};font-size:0.62rem;font-family:var(--font-mono);color:var(--text-muted);line-height:1.6;"><strong style="color:${color};">ENFORCED:</strong> ${enforcement}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">RACI Summary — iOPEX vs Cisco by Activity</div>
+    <div style="overflow-x:auto;margin-bottom:10px;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.64rem;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);">Activity</th>
+            <th style="padding:6px 10px;text-align:center;color:var(--cyan);">iOPEX</th>
+            <th style="padding:6px 10px;text-align:center;color:var(--green);">Cisco Accountable</th>
+            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);">Cisco Team</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[
+            ['Run discovery agents (01, 09, 11, 12)',   'R',  'I',  'PAM Owner'],
+            ['Confirm NHI ownership',                   'C',  'A/R','App Owners'],
+            ['Accept compliance risk / gap findings',   'C',  'A/R','Compliance + Exec Sponsor'],
+            ['Provision Keeper Gateway + network rules','I',  'A/R','NOC/Infra + NSEC'],
+            ['Run permission mapping (Agent 03)',        'R',  'I',  '—'],
+            ['Approve permission mapping output',       '✗',  'A/R','Security Architect'],
+            ['Execute ETL waves (Agent 04)',             'R',  'I',  '—'],
+            ['Confirm wave accounts are accessible',    'C',  'A/R','App Owners (per wave)'],
+            ['Certify NHI rotation policies active',    'C',  'A/R','Compliance'],
+            ['Deploy integration replacement code',     'R',  'I',  '—'],
+            ['Approve production app code (CCP→KSM)',   'C',  'A/R','Dev Leads'],
+            ['Declare migration complete',              'C',  'A/R','Compliance + PAM Owner'],
+            ['Authorize source set-to-read-only',       '✗',  'A/R','CAB + Exec Sponsor'],
+            ['Accept platform ownership post-migration','I',  'A/R','Operations'],
+          ].map((row, i) => `
+            <tr style="border-bottom:1px solid var(--border);${i % 2 === 1 ? 'background:var(--bg-surface);' : ''}">
+              <td style="padding:5px 10px;color:var(--text-bright);font-weight:500">${row[0]}</td>
+              <td style="padding:5px 10px;text-align:center;font-family:var(--font-mono);font-weight:700;color:${row[1] === '✗' ? 'var(--red)' : row[1] === 'R' ? 'var(--cyan)' : 'var(--text-muted)'}">${row[1]}</td>
+              <td style="padding:5px 10px;text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--green)">${row[2]}</td>
+              <td style="padding:5px 10px;color:var(--text-muted)">${row[3]}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:0.6rem;color:var(--text-muted);font-style:italic;">R = Responsible (does the work) &nbsp;·&nbsp; A = Accountable (owns the outcome) &nbsp;·&nbsp; C = Consulted &nbsp;·&nbsp; I = Informed &nbsp;·&nbsp; ✗ = Explicitly prohibited</div>
+  `) +
+
   _guideSection('&#x1F9E9; Hybrid PAM Architecture — Full Coverage Model', `
     <p style="margin-bottom:14px;font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
       No single front-runner covers 100% of Cisco's PAM requirements at enterprise scale. The recommended posture is a
