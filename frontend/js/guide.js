@@ -767,6 +767,137 @@ function renderGuide() {
     </div>
   `) +
 
+  _guideSection('&#x2699;&#xFE0F; Migration Platform CI/CD — Tool Decision &amp; Testing Standard', `
+    <p style="margin-bottom:14px;font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
+      The migration orchestrators (coordinator.py + 15 agents) are production-grade software that modifies live privileged
+      accounts. They require the same CI/CD discipline as any critical infrastructure code — automated testing on every
+      commit, config validation before deployment, and a promotion gate before any changes reach the migration environment.
+      <br><br>
+      <strong>The CI/CD tooling is a decision point</strong> — Cisco will likely have an existing standard (GitHub Enterprise,
+      Jenkins, GitLab CI, or Azure DevOps). The tool choice does not change the pipeline stages or testing requirements.
+      What follows is tool-agnostic: the procedure is the standard regardless of platform.
+    </p>
+
+    <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">Tool Decision Matrix — Pick One</div>
+    <div style="overflow-x:auto;margin-bottom:20px;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.66rem;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);">Platform</th>
+            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);">Best fit when…</th>
+            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);">Key consideration</th>
+            <th style="padding:6px 10px;text-align:center;color:var(--text-muted);">Secret mgmt</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[
+            ['GitHub Actions',   'Code repo is on GitHub Enterprise',                        'Runners must be self-hosted in Cisco network to reach PVWA + Keeper Gateway. No public runner can touch migration env.', 'KSM native action'],
+            ['Jenkins',          'Cisco already runs Jenkins for infrastructure automation',  'Existing pipeline library, agent pools, and LDAP auth reuse. Most common in enterprise PAM environments.', 'Keeper plugin or env vars'],
+            ['GitLab CI',        'Code repo is on GitLab (self-hosted)',                     'Built-in container registry and environments model maps cleanly to migration phases. Good secrets masking.', 'GitLab Vault integration'],
+            ['Azure DevOps',     'Cisco Microsoft shop — AzDO already managing infra',       'Service connections to Keeper and Devolutions. YAML pipelines with environment approvals match phase gates.', 'Azure Key Vault link'],
+          ].map((row, i) => `
+            <tr style="border-bottom:1px solid var(--border);${i % 2 === 1 ? 'background:var(--bg-surface);' : ''}">
+              <td style="padding:5px 10px;font-weight:700;color:var(--cyan)">${row[0]}</td>
+              <td style="padding:5px 10px;color:var(--text-standard)">${row[1]}</td>
+              <td style="padding:5px 10px;color:var(--text-standard);line-height:1.6;">${row[2]}</td>
+              <td style="padding:5px 10px;text-align:center;color:var(--text-muted)">${row[3]}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout amber" style="margin-bottom:16px;">
+      <div class="callout-title" style="color:var(--amber);font-size:0.65rem;">&#x26A0; Non-Negotiable Regardless of Tool</div>
+      <p style="font-size:0.68rem;line-height:1.8;margin:0;">
+        CI/CD runners <strong>must run inside Cisco's network</strong> — they need reachable paths to the CyberArk PVWA (source),
+        Keeper Gateway (target), and Devolutions Server (target). Public cloud runners cannot be used for any stage
+        that touches migration infrastructure. Credentials must <strong>never appear in pipeline logs</strong> — all
+        secrets injected via the chosen platform's secret store, not hardcoded in YAML.
+      </p>
+    </div>
+
+    <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">Standard Pipeline Stages — Consistent Across All Tools</div>
+    <div style="display:grid;gap:8px;margin-bottom:20px;">
+      ${[
+        ['1', 'LINT &amp; STATIC ANALYSIS', 'var(--blue)',
+         'Run <code>flake8</code> / <code>ruff</code> on all agent code. Run <code>bandit</code> for security anti-patterns (hardcoded secrets, subprocess injection, insecure deserialization). Fail on any HIGH severity finding. Takes ~30s — runs on every commit including PRs.',
+         'Every commit'],
+        ['2', 'SECRET SCAN', 'var(--red)',
+         'Scan repo history and staged files with <code>trufflehog</code> or <code>detect-secrets</code>. Flag any credential pattern (API key, password, token, private key). Pipeline hard-fails — commit cannot merge until finding is remediated. Prevents credentials from ever entering version history.',
+         'Every commit'],
+        ['3', 'UNIT TESTS', 'var(--cyan)',
+         'pytest suite for each agent — mock all external API calls (PVWA, Keeper, Devolutions). Test: ETL transform logic, permission mapping rules (22→Vault roles, 22→4 axes), NHI classification signals, state machine transitions, error sanitization (no secrets in exception messages), watchdog timer logic.',
+         'Every commit'],
+        ['4', 'CONFIG VALIDATION', 'var(--amber)',
+         'Schema-validate <code>config.json</code> and <code>agent_config.json</code> against their JSON Schema definitions. Verify all required fields present, URL formats valid, timeout values in safe ranges. Run <code>python3 cli.py preflight --dry-run</code> against the staging config. Catches malformed configs before deployment — a bad config during live migration can freeze accounts.',
+         'Every commit'],
+        ['5', 'INTEGRATION TESTS', 'var(--green)',
+         'Deploy a mock API server (Flask emulating PVWA + Keeper PAM + Devolutions REST) in the runner environment. Run a full P1 discovery sequence and a 10-account ETL pipeline against mock endpoints. Validates actual HTTP request/response handling, retry logic, circuit breaker behavior, and state file writes. Slower (~5 min) — runs on merge to main only.',
+         'Merge to main'],
+        ['6', 'DEPLOYMENT TO STAGING', 'var(--purple)',
+         'Package orchestrator code, copy to staging host, install dependencies, run <code>cli.py preflight</code> against real staging endpoints (CyberArk dev/lab + Keeper test tenant + Devolutions test instance). A passing preflight confirms connectivity, auth, and config are all healthy before any migration code runs.',
+         'Merge to main'],
+        ['7', 'PROMOTION GATE — HUMAN APPROVAL', 'var(--amber)',
+         'Before any deployment reaches the production migration environment, a named approver (Migration Lead or Security Architect) manually reviews the change and approves in the CI/CD platform. This mirrors the Agent 08 runbook gate model — the pipeline enforces it mechanically. No code reaches the live migration environment without a human sign-off.',
+         'Pre-P1 deploy'],
+        ['8', 'LOAD &amp; THROUGHPUT TEST', 'var(--cyan)',
+         'Seed mock API with 20,000+ account records. Run ETL pipeline and measure: batch throughput (accounts/min), Keeper Gateway API call rate (must stay under 50 calls/min per vault ceiling), state file write performance, and memory footprint under sustained load. Run before each production wave (P5). Catches Keeper HTTP 403 throttle scenarios and Gateway OOM risk at Cisco scale.',
+         'Pre-P5 waves'],
+        ['9', 'ROLLBACK TEST', 'var(--red)',
+         'Inject a simulated mid-pipeline failure (kill coordinator process at step 4 of 7). Verify: watchdog timer fires within 120 min, all frozen accounts are unfrozen, state file is recoverable, coordinator resumes correctly from last checkpoint on restart. Must pass before production waves. This is the safety net — validate it works before you need it.',
+         'Pre-P5 waves'],
+      ].map(([num, label, color, desc, when]) => `
+        <div style="display:grid;grid-template-columns:28px 180px 1fr 80px;gap:10px;align-items:start;padding:10px 12px;background:var(--bg-surface);border:1px solid var(--border);border-left:3px solid ${color};border-radius:4px;">
+          <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);font-weight:700;padding-top:1px;">${num}</div>
+          <div style="font-family:var(--font-mono);font-size:0.6rem;color:${color};font-weight:700;padding-top:2px;line-height:1.4;">${label}</div>
+          <div style="font-size:0.67rem;color:var(--text-standard);line-height:1.7;">${desc}</div>
+          <div style="font-size:0.58rem;font-family:var(--font-mono);color:var(--text-muted);text-align:right;padding-top:2px;">${when}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">Environment Promotion Model</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;font-size:0.65rem;text-align:center;">
+      ${[
+        ['DEV', 'var(--blue)', 'Local dev machine or feature branch. Stages 1–4 only. Mock APIs throughout.'],
+        ['STAGING', 'var(--amber)', 'Shared staging host. Stages 1–6. Real CyberArk dev/lab + Keeper test tenant.'],
+        ['MIGRATION ENV', 'var(--red)', 'Live migration server. Stage 7 human gate required. All stages must be green.'],
+        ['PRODUCTION WAVES', 'var(--green)', 'P5 waves. Stages 8–9 load + rollback tests must pass first.'],
+      ].map(([env, color, desc]) => `
+        <div style="background:var(--bg-surface);border:1px solid ${color};border-radius:6px;padding:12px 8px;">
+          <div style="font-family:var(--font-mono);font-weight:700;color:${color};margin-bottom:6px;">${env}</div>
+          <div style="color:var(--text-muted);line-height:1.6;">${desc}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="callout" style="border-color:var(--green);background:var(--bg-surface);">
+      <div class="callout-title" style="color:var(--green);font-size:0.65rem;">What Stays the Same Regardless of CI/CD Tool</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.68rem;color:var(--text-standard);line-height:1.8;margin-top:6px;">
+        <div>
+          <strong>The 9 pipeline stages</strong> — lint, secret scan, unit tests, config validation, integration tests,
+          staging deploy, human approval gate, load test, rollback test. Every tool can implement these. The stage
+          order and pass/fail criteria are fixed.
+        </div>
+        <div>
+          <strong>The test coverage targets</strong> — unit tests cover all agent logic; integration tests cover full
+          P1 discovery + 10-account ETL; load test covers 20K+ accounts. These thresholds apply regardless of whether
+          the runner is a GitHub Action, a Jenkins agent, or a GitLab runner.
+        </div>
+        <div>
+          <strong>The secret handling rules</strong> — credentials injected at runtime from the chosen secret store,
+          never in YAML or code, never in logs. Trufflehog/detect-secrets runs on every commit. This is non-negotiable
+          for a system handling live privileged credentials.
+        </div>
+        <div>
+          <strong>The human promotion gate</strong> — no code reaches the migration environment without a named
+          approver. This mirrors the Agent 08 phase gate model and provides the same audit trail. The CI/CD platform
+          records who approved, when, and what SHA was deployed.
+        </div>
+      </div>
+    </div>
+  `) +
+
   _guideSection('Glossary', `
     <div style="columns:2;column-gap:20px;font-size:0.65rem;">
       ${[
