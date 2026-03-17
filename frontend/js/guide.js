@@ -677,6 +677,96 @@ function renderGuide() {
     </div>
   `) +
 
+  _guideSection('&#x1F680; Taking This Live — Pre-Production Checklist', `
+    <p style="margin-bottom:14px;font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
+      This demo runs entirely on mock data. The 15-agent orchestration code is production-grade Python, but the
+      control center UI is wired to a mock API layer. The items below are what convert this demo into a live
+      migration platform. They are sequenced by dependency — <strong>you cannot skip ahead</strong>.
+      The full checklist also appears in the <strong>Comparison tab → "What's Needed for Production"</strong> panel.
+    </p>
+
+    <div class="callout" style="border-color:var(--red);background:var(--bg-surface);margin-bottom:16px;">
+      <div class="callout-title" style="color:var(--red);font-size:0.65rem;">&#x1F6A7; Hard Gate — Must Be True Before Migration Starts</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:0.68rem;color:var(--text-standard);line-height:1.8;margin-top:6px;">
+        <div>
+          <strong style="color:var(--cyan)">1. Keeper Gateway deployed</strong><br>
+          Docker container (4 CPU / 16 GB) running in a network segment with line-of-sight to all managed systems
+          (Windows DCs, Unix hosts, Oracle/MSSQL servers, Cisco IOS devices). Without Gateway, rotation and heartbeat
+          calls never reach targets — migration appears to succeed but credentials are unverified.
+          At Cisco 250K+ scale: minimum 2-node HA cluster behind a load balancer.
+        </div>
+        <div>
+          <strong style="color:var(--cyan)">2. CyberArk PVWA service account credentialed</strong><br>
+          A dedicated migration service account in CyberArk with Safe Member rights across all source safes.
+          Credentials set as environment variables (<code style="color:var(--green)">CYBERARK_USERNAME</code> /
+          <code style="color:var(--green)">CYBERARK_PASSWORD</code>). The PVWA endpoint must be reachable from
+          the orchestration host. This is the source — Agent 01 and 04 fail without it.
+        </div>
+        <div>
+          <strong style="color:var(--cyan)">3. Keeper PAM OAuth2 credentials issued</strong><br>
+          Client ID + Secret from the Keeper Admin Console
+          (<code style="color:var(--green)">KEEPER_CLIENT_ID</code> /
+          <code style="color:var(--green)">KEEPER_CLIENT_SECRET</code>).
+          The PAM Config (top of the 3-tier hierarchy) must be created before any accounts can be imported.
+          Without this, Agent 04 ETL has no target to write to.
+        </div>
+        <div>
+          <strong style="color:var(--cyan)">4. <code>keeper-secrets-manager-core</code> installed</strong><br>
+          Add to <code style="color:var(--green)">requirements.txt</code> in the orchestration environment.
+          Required for KSM DevOps secrets distribution (CI/CD pipeline credential handoff). The vault migration
+          itself (Agent 04) uses the Keeper PAM REST API directly — KSM SDK is specifically needed for the
+          NHI/DevOps secrets phase (P5 onward).
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">Full Production Readiness — Sequenced by Dependency</div>
+    <div style="overflow-x:auto;margin-bottom:16px;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.66rem;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);width:28px;">#</th>
+            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);">Item</th>
+            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);">Why it matters</th>
+            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);width:80px;">Needed by</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[
+            ['1',  'Wire API stubs → real coordinator.py agent calls',       'The demo backend returns mock JSON. Production wires each API route to the actual agent method — Agent 01 for discovery, 04 for ETL, 05 for heartbeat, etc.', 'P1'],
+            ['2',  'CyberArk PVWA REST API (Agents 11, 01, 04)',              'Source system connectivity. All discovery, account export, and freeze/unfreeze operations hit the live PVWA endpoint. Env vars + network access required.', 'P1'],
+            ['3',  'Devolutions Server REST API (Agents 04, 05, 10)',         'Target vault for Option A. Agent 04 ETL creates Vault entries; Agent 05 heartbeat verifies; Agent 10 staging validates before production waves.', 'P2'],
+            ['4',  'Keeper Gateway + PAM API (rotation, heartbeat, KSM)',     'Target for Option B. Gateway must be running for rotation and heartbeat. KSM SDK handles DevOps secrets. Hard gate — see above.', 'P1'],
+            ['5',  'OAuth2/OIDC provider integration (enterprise IdP)',        'Enterprise SSO into the control center UI. MiniOrange or Cisco\'s existing IdP issues tokens. Without this, the UI has no authentication layer.', 'Pre-P1'],
+            ['6',  'Database persistence (PostgreSQL for state)',             'Migration state currently held in JSON files. PostgreSQL enables multi-node orchestration, crash recovery without file locks, and audit log queries at scale.', 'P1'],
+            ['7',  'WebSocket support for real-time agent status',            'The UI polls the API today. WebSockets push live agent heartbeat, ETL progress, and gate status to the dashboard without polling lag.', 'P3'],
+            ['8',  'Production TLS / certificate management',                 'PVWA, Keeper, and Devolutions Server all enforce HTTPS. The orchestration host needs valid certs and the CA chain for all three endpoints trusted.', 'Pre-P1'],
+            ['9',  'CI/CD pipeline (GitHub Actions or Jenkins)',              'Automates orchestrator deployment, config validation, and regression tests on each commit. Prevents broken agent code reaching the migration environment.', 'Pre-P1'],
+            ['10', 'Load testing with 20K+ accounts',                        'Validates ETL batch sizing, Keeper Gateway throughput, and API rate-limit handling (Keeper HTTP 403 throttle) before running production waves.', 'Pre-P5'],
+            ['11', 'Security audit and penetration testing',                  'The orchestrator handles live privileged credentials in memory. Pentest validates secret zeroing, state file permissions, TLS config, and API auth posture.', 'Pre-P5'],
+            ['12', 'Dual-backend parallel mode (P6 traffic shifting)',        'Phase 6 runs source and target simultaneously. The control center needs to display both systems live, shift traffic percentages, and trigger rollback on anomaly.', 'P6'],
+          ].map((row, i) => `
+            <tr style="border-bottom:1px solid var(--border);${i % 2 === 1 ? 'background:var(--bg-surface);' : ''}">
+              <td style="padding:5px 10px;font-family:var(--font-mono);color:var(--text-muted);font-size:0.6rem;">${row[0]}</td>
+              <td style="padding:5px 10px;font-weight:600;color:var(--text-bright)">${row[1]}</td>
+              <td style="padding:5px 10px;color:var(--text-standard);line-height:1.6;">${row[2]}</td>
+              <td style="padding:5px 10px;font-family:var(--font-mono);font-size:0.6rem;color:var(--amber);font-weight:700;">${row[3]}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout teal" style="margin-top:4px;">
+      <div class="callout-title" style="color:var(--cyan);font-size:0.65rem;">Minimum Viable Start — What You Need on Day 1</div>
+      <p style="font-size:0.68rem;line-height:1.8;margin:0;">
+        Items <strong>#1–4 + #8</strong> are sufficient to run Phase 1 (discovery and gap analysis) against a live CyberArk environment.
+        No accounts are moved in P1 — it is read-only. This means you can validate connectivity, agent output, and permission mapping
+        reports against real data before any migration risk is taken. Items #5–12 are required before production waves (P5) begin.
+        The Keeper Gateway (<strong>#4</strong>) is the longest-lead infrastructure item — provision it first.
+      </p>
+    </div>
+  `) +
+
   _guideSection('Glossary', `
     <div style="columns:2;column-gap:20px;font-size:0.65rem;">
       ${[
