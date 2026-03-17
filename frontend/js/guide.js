@@ -556,6 +556,127 @@ function renderGuide() {
     </div>
   `) +
 
+  _guideSection('&#x1F9E9; Hybrid PAM Architecture — Full Coverage Model', `
+    <p style="margin-bottom:14px;font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
+      No single front-runner covers 100% of Cisco's PAM requirements at enterprise scale. The recommended posture is a
+      <strong>layered hybrid</strong>: Keeper as the primary secrets vault and DevOps core, Devolutions RDM as the
+      session management layer for on-prem/hybrid infrastructure, and MiniOrange as the identity and MFA front-door.
+      Together, they close every gap left open by each individual vendor.
+    </p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div style="background:var(--bg-surface);border:1px solid var(--cyan);border-radius:8px;padding:14px;">
+        <div style="font-size:0.62rem;font-family:var(--font-mono);color:var(--cyan);font-weight:700;margin-bottom:8px;letter-spacing:.04em;">KEEPER SECURITY — CORE VAULT</div>
+        <ul style="margin:0;padding-left:14px;font-size:0.68rem;color:var(--text-standard);line-height:1.9;">
+          <li>Privileged secrets vault (zero-knowledge)</li>
+          <li>KSM — DevOps/NHI secrets (40+ integrations)</li>
+          <li>KCM — Browser-based session recording</li>
+          <li>Password rotation via Keeper Gateway</li>
+          <li>JIT / just-in-time access provisioning</li>
+          <li>FedRAMP High (March 2026)</li>
+          <li>Cloud IAM integration (AWS/Azure/GCP)</li>
+        </ul>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--blue);border-radius:8px;padding:14px;">
+        <div style="font-size:0.62rem;font-family:var(--font-mono);color:var(--blue);font-weight:700;margin-bottom:8px;letter-spacing:.04em;">DEVOLUTIONS RDM — SESSION LAYER</div>
+        <ul style="margin:0;padding-left:14px;font-size:0.68rem;color:var(--text-standard);line-height:1.9;">
+          <li>RDP / SSH / VNC / Telnet (100+ protocols)</li>
+          <li>On-prem session recording &amp; playback</li>
+          <li>Cisco IOS / NX-OS / ASA terminal sessions</li>
+          <li>RDM Agent credential rotation</li>
+          <li>Jump-host for air-gapped segments</li>
+          <li>Credential pull from Keeper vault via API</li>
+          <li>No Windows RDS licensing required</li>
+        </ul>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--purple);border-radius:8px;padding:14px;">
+        <div style="font-size:0.62rem;font-family:var(--font-mono);color:var(--purple);font-weight:700;margin-bottom:8px;letter-spacing:.04em;">MINIORANGE — IDENTITY FRONT-DOOR</div>
+        <ul style="margin:0;padding-left:14px;font-size:0.68rem;color:var(--text-standard);line-height:1.9;">
+          <li>MFA enforcement (TOTP, Push, FIDO2)</li>
+          <li>SSO / SAML / OIDC brokering</li>
+          <li>Identity governance &amp; access review</li>
+          <li>Step-up auth for high-risk vaults</li>
+          <li>Cisco Duo / AD / LDAP integration</li>
+          <li>Risk-based adaptive authentication</li>
+          <li>Access request &amp; approval workflow</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">PAM Component Coverage Map</div>
+    <div style="overflow-x:auto;margin-bottom:20px;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.66rem;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);min-width:180px;">PAM Component</th>
+            <th style="padding:6px 10px;color:var(--cyan);text-align:center;">Keeper</th>
+            <th style="padding:6px 10px;color:var(--blue);text-align:center;">Devolutions</th>
+            <th style="padding:6px 10px;color:var(--purple);text-align:center;">MiniOrange</th>
+            <th style="padding:6px 10px;color:var(--green);text-align:center;">Covered?</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[
+            ['Privileged Secrets Vault',         '✓ Primary',       '✓ Secondary',    '✗',                '✓ FULL'],
+            ['Password Rotation',                 '✓ Gateway',       '✓ RDM Agent',    '⚠ Basic',          '✓ FULL'],
+            ['Session Recording',                 '✓ KCM',           '✓ RDM',          '✗',                '✓ FULL'],
+            ['RDP / SSH / VNC Access',            '⚠ KCM (browser)', '✓ Native RDM',   '✗',                '✓ FULL'],
+            ['Cisco Network Device Access',       '⚠ Custom scripts','✓ Telnet/SSH/CLI','✗',                '✓ FULL'],
+            ['DevOps / NHI Secrets (CI/CD)',      '✓ KSM 40+',       '⚠ REST only',    '✗',                '✓ FULL'],
+            ['Cloud IAM (AWS/Azure/GCP)',          '✓ Native',        '⚠ Entry type',   '⚠ SSO only',       '✓ FULL'],
+            ['MFA / Step-up Authentication',      '✓ Built-in',      '⚠ Basic',        '✓ Primary',        '✓ FULL'],
+            ['SSO / Identity Brokering',          '⚠ Limited',       '✗',              '✓ SAML/OIDC',      '✓ FULL'],
+            ['Just-in-Time Access (ZSP)',         '✓ KSM JIT',       '✗',              '✓ Approval flow',  '✓ FULL'],
+            ['Compliance Audit Trail',            '✓ FedRAMP High',  '✓ RDM logs',     '✓ IAM audit',      '✓ FULL'],
+            ['Database Credential Mgmt',          '✓ PAM Resources', '✓ DB entry type','⚠ Basic',          '✓ FULL'],
+            ['Air-gapped / Jump-host Access',     '⚠ Gateway only',  '✓ Jump server',  '✗',                '✓ FULL'],
+            ['Access Request / Approval',         '⚠ Basic',         '✗',              '✓ Workflow',       '✓ FULL'],
+            ['Zero Standing Privilege',           '✓ KSM dynamic',   '✗',              '✓ Adaptive auth',  '✓ FULL'],
+          ].map((row, i) => `
+            <tr style="border-bottom:1px solid var(--border);${i % 2 === 1 ? 'background:var(--bg-surface);' : ''}">
+              <td style="padding:5px 10px;font-weight:600;color:var(--text-bright)">${row[0]}</td>
+              <td style="padding:5px 10px;text-align:center;color:var(--text-standard)">${row[1]}</td>
+              <td style="padding:5px 10px;text-align:center;color:var(--text-standard)">${row[2]}</td>
+              <td style="padding:5px 10px;text-align:center;color:var(--text-standard)">${row[3]}</td>
+              <td style="padding:5px 10px;text-align:center;color:var(--green);font-weight:700;font-size:0.6rem;font-family:var(--font-mono);">${row[4]}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">Integration Architecture</div>
+    <div class="callout" style="border-color:var(--green);background:var(--bg-surface);margin-bottom:10px;">
+      <div class="callout-title" style="color:var(--green);font-size:0.65rem;">How the Three Layers Connect</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.68rem;color:var(--text-standard);line-height:1.8;">
+        <div>
+          <strong style="color:var(--cyan)">MiniOrange → Keeper &amp; Devolutions</strong><br>
+          MiniOrange acts as SAML/OIDC identity provider. Users authenticate via MiniOrange MFA before being granted a Keeper session token or Devolutions RDM session. Step-up MFA triggers for high-sensitivity vaults.
+        </div>
+        <div>
+          <strong style="color:var(--blue)">Devolutions RDM → Keeper Vault</strong><br>
+          Devolutions RDM entries pull credentials directly from Keeper via KSM API integration. Passwords are never stored in RDM — retrieved just-in-time at session launch and zero-standing-privilege enforced.
+        </div>
+        <div>
+          <strong style="color:var(--cyan)">Keeper KSM → CI/CD &amp; Cloud</strong><br>
+          GitHub Actions, Terraform, Ansible, and Kubernetes pull secrets from KSM. Cisco network automation scripts (Ansible for IOS/NX-OS) consume Keeper-managed credentials via native KSM SDK — no plaintext in pipelines.
+        </div>
+        <div>
+          <strong style="color:var(--purple)">MiniOrange → Access Governance</strong><br>
+          Periodic access reviews and certification campaigns run through MiniOrange IAM. Orphaned accounts flagged for Keeper vault cleanup. Risk-based policies trigger automatic vault lock for anomalous access patterns.
+        </div>
+      </div>
+    </div>
+
+    <div class="callout amber" style="margin-top:10px;">
+      <div class="callout-title" style="color:var(--amber);font-size:0.65rem;">&#x26A0; Deployment Phasing Recommendation</div>
+      <p style="font-size:0.68rem;line-height:1.8;margin:0;">
+        <strong>Phase 1 (Weeks 1–36):</strong> Deploy Keeper as primary vault — migrate all CyberArk accounts, rotate credentials, stand up KSM for DevOps pipelines.<br>
+        <strong>Phase 2 (Weeks 20–44):</strong> Layer Devolutions RDM — import Keeper-managed credentials into RDM entries for on-prem session management. Retire CyberArk PSM.<br>
+        <strong>Phase 3 (Weeks 30–44):</strong> Deploy MiniOrange — configure SAML federation to both Keeper and Devolutions, enforce adaptive MFA, enable access review workflows.
+      </p>
+    </div>
+  `) +
+
   _guideSection('Glossary', `
     <div style="columns:2;column-gap:20px;font-size:0.65rem;">
       ${[
