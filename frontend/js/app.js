@@ -23,6 +23,7 @@ function showPage(pageId, btn) {
     case 'compare': renderComparison(); break;
     case 'pamfile': break; // standalone iframe — no render needed
     case 'mcp': renderMcpDashboard(); break;
+    case 'pmo': renderPMODashboard(); break;
     case 'guide': renderGuide(); break;
     case 'lab': renderLabShowcase(); break;
     case 'disclaimer': renderDisclaimer(); break;

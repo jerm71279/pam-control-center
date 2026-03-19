@@ -139,6 +139,40 @@ function renderGuide() {
   _guideSection('SHIFT Architecture — Framework-Agnostic Design', `
     <p style="margin-bottom:14px;">SHIFT is a <strong>methodology, tooling, and agent design pattern</strong> — not an SDK. The underlying orchestration engine is swappable. This makes SHIFT portable and platform-independent.</p>
 
+    <div style="margin-bottom:20px;">
+      <div style="font-weight:700;color:var(--text-bright);margin-bottom:10px;font-size:0.72rem;letter-spacing:.05em;">THREE-LAYER COORDINATION MODEL</div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div class="shift-arch-layer" style="background:var(--amber-dim);border-color:var(--amber);">
+          <div class="shift-arch-label" style="color:var(--amber);">LAYER 0 — PMO INTELLIGENCE</div>
+          <div class="shift-arch-desc">
+            <strong style="color:var(--amber)">OpenClaw</strong> (PMO Brain) generates weekly PMO Directive JSON payloads — action items, gate readiness, blocked items, team accountability. RAG corpus ingests all project events (gates, checkpoints, directives, execution results) into ChromaDB + SQLite. BI Dashboard surfaces 6-panel management view.
+          </div>
+          <div style="font-size:0.52rem;color:var(--amber);margin-top:6px;font-family:var(--font-mono);letter-spacing:1px;">MANAGEMENT INTELLIGENCE — WHAT NEEDS TO HAPPEN &amp; WHY</div>
+        </div>
+        <div class="shift-arch-arrow">&#x25BC;</div>
+        <div class="shift-arch-layer" style="background:var(--teal-dim);border-color:var(--teal);">
+          <div class="shift-arch-label" style="color:var(--teal);">LAYER 1 — EXECUTION ENGINE</div>
+          <div class="shift-arch-desc">
+            <strong style="color:var(--teal)">Claude Code</strong> receives PMO Directives, routes action items to the 15 SHIFT LangGraph agents, emits structured Execution Result payloads back to OpenClaw. Each result is ingested into the RAG corpus, closing the weekly PMO cycle.
+          </div>
+          <div style="font-size:0.52rem;color:var(--teal);margin-top:6px;font-family:var(--font-mono);letter-spacing:1px;">EXECUTION ROUTING — 15 AGENTS · PHASE GATES · ETL PIPELINE</div>
+        </div>
+        <div class="shift-arch-arrow">&#x25BC;</div>
+        <div class="shift-arch-layer" style="background:var(--cyan-dim);border-color:var(--cyan);">
+          <div class="shift-arch-label" style="color:var(--cyan);">LAYER 2 — SHIFT CONTROL CENTER</div>
+          <div class="shift-arch-desc">
+            <strong style="color:var(--cyan)">This demo</strong> — real-time operational dashboard for gates, waves, checkpoints, agents, and migration phases. In production: backend connects to live CyberArk PVWA and target platform APIs (Devolutions / Keeper / MiniOrange).
+          </div>
+          <div style="font-size:0.52rem;color:var(--cyan);margin-top:6px;font-family:var(--font-mono);letter-spacing:1px;">VISIBILITY LAYER — GATES · WAVES · PHASES · ML · CHECKPOINTS</div>
+        </div>
+      </div>
+      <div class="callout amber" style="margin-top:12px;font-size:0.67rem;line-height:1.6;">
+        <div class="callout-title" style="color:var(--amber);font-size:0.7rem;">PMO Cycle (Weekly)</div>
+        <p style="margin:0;">OpenClaw synthesizes project state &rarr; emits PMO Directive &rarr; Claude Code routes to agents &rarr; agents execute &rarr; Execution Results emitted &rarr; OpenClaw ingests results &rarr; RAG corpus updated &rarr; Dashboard refreshes. Gate events and Yellow Checkpoints are ingested in real-time as they occur.</p>
+      </div>
+    </div>
+
+    <div style="font-weight:700;color:var(--text-bright);margin-bottom:10px;font-size:0.72rem;letter-spacing:.05em;">FRAMEWORK-AGNOSTIC ORCHESTRATION</div>
     <div style="display:flex;flex-direction:column;gap:0;margin:14px 0;">
       <div class="shift-arch-layer" style="background:var(--teal-dim);border-color:var(--teal);">
         <div class="shift-arch-label" style="color:var(--teal);">SHIFT METHODOLOGY LAYER</div>
