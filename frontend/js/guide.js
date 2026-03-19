@@ -145,7 +145,7 @@ function renderGuide() {
         <div class="shift-arch-layer" style="background:var(--amber-dim);border-color:var(--amber);">
           <div class="shift-arch-label" style="color:var(--amber);">LAYER 0 — PMO INTELLIGENCE</div>
           <div class="shift-arch-desc">
-            <strong style="color:var(--amber)">OpenClaw</strong> (PMO Brain) generates weekly PMO Directive JSON payloads — action items, gate readiness, blocked items, team accountability. RAG corpus ingests all project events (gates, checkpoints, directives, execution results) into ChromaDB + SQLite. BI Dashboard surfaces 6-panel management view.
+            <strong style="color:var(--amber)">iOPEX PMO Engine</strong> (PMO Brain) generates weekly PMO Directive JSON payloads — action items, gate readiness, blocked items, team accountability. RAG corpus ingests all project events (gates, checkpoints, directives, execution results) into ChromaDB + SQLite. BI Dashboard surfaces 6-panel management view.
           </div>
           <div style="font-size:0.52rem;color:var(--amber);margin-top:6px;font-family:var(--font-mono);letter-spacing:1px;">MANAGEMENT INTELLIGENCE — WHAT NEEDS TO HAPPEN &amp; WHY</div>
         </div>
@@ -153,7 +153,7 @@ function renderGuide() {
         <div class="shift-arch-layer" style="background:var(--teal-dim);border-color:var(--teal);">
           <div class="shift-arch-label" style="color:var(--teal);">LAYER 1 — EXECUTION ENGINE</div>
           <div class="shift-arch-desc">
-The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Directives, routes action items to the 15 SHIFT LangGraph agents, emits structured Execution Result payloads back to OpenClaw. Each result is ingested into the RAG corpus, closing the weekly PMO cycle.
+The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Directives, routes action items to the 15 SHIFT LangGraph agents, emits structured Execution Result payloads back to iOPEX PMO Engine. Each result is ingested into the RAG corpus, closing the weekly PMO cycle.
           </div>
           <div style="font-size:0.52rem;color:var(--teal);margin-top:6px;font-family:var(--font-mono);letter-spacing:1px;">EXECUTION ROUTING — 15 AGENTS · PHASE GATES · ETL PIPELINE</div>
         </div>
@@ -168,7 +168,7 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
       </div>
       <div class="callout amber" style="margin-top:12px;font-size:0.67rem;line-height:1.6;">
         <div class="callout-title" style="color:var(--amber);font-size:0.7rem;">PMO Cycle (Weekly)</div>
-        <p style="margin:0;">OpenClaw synthesizes project state &rarr; emits PMO Directive &rarr; Execution Engine routes to agents &rarr; agents execute &rarr; Execution Results emitted &rarr; OpenClaw ingests results &rarr; RAG corpus updated &rarr; Dashboard refreshes. Gate events and Yellow Checkpoints are ingested in real-time as they occur.</p>
+        <p style="margin:0;">iOPEX PMO Engine synthesizes project state &rarr; emits PMO Directive &rarr; Execution Engine routes to agents &rarr; agents execute &rarr; Execution Results emitted &rarr; iOPEX PMO Engine ingests results &rarr; RAG corpus updated &rarr; Dashboard refreshes. Gate events and Yellow Checkpoints are ingested in real-time as they occur.</p>
       </div>
     </div>
 
