@@ -22,19 +22,22 @@ OPTIONS = {
         "risk_profile": "Mid-market heritage; validate scale at 100K+ before committing; strong session mgmt",
     },
     "b": {
-        "name": "KeeperPAM + KSM + KCM",
-        "short": "Keeper",
-        "color": "cyan",
-        "target": "Keeper Vault",
-        "auth": "Keeper Cloud OAuth2 / SAML SSO / enforced MFA",
-        "perm_model": "22 → 4 boolean axes (manage_users, manage_records, can_edit, can_share) — LOSSY",
+        "name": "KeeperPAM",
+        "short": "KeeperPAM",
+        "color": "green",
+        "timeline": "80 weeks",
+        "target": "KeeperPAM Vault",
+        "auth": "OAuth2 client_credentials (KeeperPAM Identity) / SAML SSO / enforced MFA",
+        "perm_model": "22 → 4 boolean axes (manage_users, manage_records, can_edit, can_share) — LOSSY (12 permissions unrepresentable)",
         "data_structure": "PAM Config → PAM Resource → PAM User (3-tier hierarchy — requires post-import transform)",
-        "containers": "Shared Folders",
-        "sessions": "KCM (Keeper Connection Manager — Apache Guacamole, browser-native, no RDS licensing)",
-        "connectors": "Keeper Gateway (Docker — 4 CPU / 16GB RAM per node; HA cluster for Cisco scale)",
+        "containers": "Vaults (Shared Folders)",
+        "sessions": "KCM (Keeper Connection Manager — browser-native session recording, no RDS licensing)",
+        "connectors": "KeeperPAM Gateway (Docker — HTTPS outbound, cloud-managed, HA cluster for enterprise scale)",
         "integration_path": "Full re-architecture. KSM SDK replaces CCP/AAM. 40+ native integrations (K8s, Terraform, Ansible, GitHub Actions).",
-        "audit_retention": "Manual export. CyberArk audit logs do NOT transfer to Keeper. Keep CyberArk read-only.",
-        "risk_profile": "Zero-knowledge SaaS; FedRAMP High (March 2026); Gateway HA required at 250K+ accounts",
+        "audit_retention": "KeeperPAM audit log native. CyberArk audit logs do NOT transfer — retain CyberArk read-only for compliance period.",
+        "risk_profile": "Zero-knowledge SaaS; FedRAMP High; KeeperPAM Gateway HA required at enterprise scale",
+        "sdk": "KSM (Keeper Secrets Manager) SDK — Python, Java, C#, .NET, Go",
+        "env_vars": "KEEPERPAM_CLIENT_ID, KEEPERPAM_CLIENT_SECRET",
     },
     "c": {
         "name": "MiniOrange PAM",
@@ -49,7 +52,7 @@ OPTIONS = {
         "connectors": "MiniOrange Agent (Windows / Linux)",
         "integration_path": "Partial re-architecture. REST API-based. Different endpoints and auth, simpler SDK than Keeper.",
         "audit_retention": "Manual export. CyberArk audit logs do NOT transfer to MiniOrange. Basic audit trail only.",
-        "risk_profile": "Lowest cost; IAM-first heritage; PAM features less proven at Cisco enterprise scale (250K+)",
+        "risk_profile": "Lowest cost; IAM-first heritage; PAM features less proven at enterprise scale (250K+)",
     },
 }
 
@@ -175,7 +178,7 @@ PHASES = {
             ],
             "b": [
                 "Configure Keeper Cloud OAuth2 / SAML authentication",
-                "Deploy Keeper Gateway (Docker) nodes; configure HA for Cisco scale",
+                "Deploy Keeper Gateway (Docker) nodes; configure HA for enterprise scale",
                 "Provision KCM (Keeper Connection Manager) and connect to Gateway",
                 "Configure Gateway rotation scripts for Cisco network gear (IOS/NX-OS/ASA/Meraki)",
             ],
@@ -303,7 +306,7 @@ PHASES = {
             ],
             "a": [
                 "Wave 4: Agent 06 generates replacement code using Devolutions REST API (Python/Java/C#/PowerShell)",
-                "Wave 5: Agent 07 compliance report includes Devolutions-specific risks (audit discontinuity, permission loss, Cisco gear rotation gaps)",
+                "Wave 5: Agent 07 compliance report includes Devolutions-specific risks (audit discontinuity, permission loss, network gear rotation gaps)",
             ],
             "b": [
                 "Wave 4: Agent 06 generates KSM SDK replacement code — CCP/AAM → KSM 40+ native integrations",
@@ -444,7 +447,7 @@ AGENTS = {
         "desc": "Permission audit and structure migration. P1: audits all 22 CyberArk safe permissions per member. P3: creates structure in target with correct permission mappings.",
         "inputs": ["Discovery manifest (Agent 01)", "Target API access"],
         "outputs": ["Permission mapping report", "Escalation flags", "Structure in target"],
-        "api_calls": ["GET /Safes/{name}/Members", "POST /Safes (Option B)", "POST /api/v1/folder-permissions (Option A)"],
+        "api_calls": ["GET /Safes/{name}/Members (CyberArk source)", "POST /api/v2/shared-folders (KeeperPAM target)"],
         "gates": ["g5"], "blocked_by": [1],
     },
     "4": {
@@ -453,7 +456,7 @@ AGENTS = {
         "desc": "Core ETL engine. Batch processing with 120-min watchdog timer. Steps: Freeze→Export→Transform→Import→Heartbeat→Unfreeze. Rate limiting (100/min). Emergency unfreeze on exception.",
         "inputs": ["Agent 09 dependency map", "Agent 10 staging pass", "Agent 12 NHI classifications"],
         "outputs": ["Per-wave migration reports", "Batch execution logs"],
-        "api_calls": ["POST /Accounts/{id}/Password/Retrieve", "POST /Safes/{name}/Members (Option B)", "POST /api/v1/secrets (Option A)"],
+        "api_calls": ["POST /Accounts/{id}/Password/Retrieve (CyberArk source)", "POST /api/v2/vault/records/add (KeeperPAM target)"],
         "gates": ["g6"], "blocked_by": [10],
     },
     "5": {
@@ -462,7 +465,7 @@ AGENTS = {
         "desc": "10-check post-migration validation. Count comparison (<1% variance), heartbeat verification (>95%), permission mapping, metadata integrity, audit continuity, rollback testing.",
         "inputs": ["Migrated accounts in target"],
         "outputs": ["Validation reports per wave"],
-        "api_calls": ["POST /Accounts/{id}/Verify (Option B)", "POST /api/v1/secrets/{id}/heartbeat (Option A)"],
+        "api_calls": ["POST /Accounts/{id}/Verify (CyberArk source)", "POST /api/v2/secrets/verify (KeeperPAM target)"],
         "gates": [], "blocked_by": [4],
     },
     "6": {
@@ -507,7 +510,7 @@ AGENTS = {
         "desc": "10-assertion staging pipeline. Runs mini-ETL on ~100 sample accounts. Hard-blocks Agent 04 production migration if any assertion fails.",
         "inputs": ["Target environment", "Sample accounts (20 per wave type)"],
         "outputs": ["Staging validation report (10 assertions)"],
-        "api_calls": ["POST /Safes (create)", "POST /Accounts (import)", "DELETE /Accounts (rollback test)"],
+        "api_calls": ["POST /Safes (CyberArk source read)", "POST /api/v2/shared-folders (KeeperPAM create)", "DELETE /api/v2/vault/records/{id} (KeeperPAM rollback test)"],
         "gates": ["g4"], "blocked_by": [13],
     },
     "11": {
@@ -534,7 +537,7 @@ AGENTS = {
         "desc": "Validates target platform/template coverage against source. Deploys connection components. Auto-creates missing Entry types in Devolutions / rotation scripts in Keeper Gateway / resource types in MiniOrange.",
         "inputs": ["Discovery manifest (platforms list)"],
         "outputs": ["Platform validation report", "Connection component deployment log"],
-        "api_calls": ["GET /Platforms/Targets (Option B)", "GET /api/v1/secret-templates (Option A)"],
+        "api_calls": ["GET /Platforms/Targets (CyberArk source)", "GET /api/v2/record-types (KeeperPAM target)"],
         "gates": [], "blocked_by": [2],
     },
     "14": {
@@ -598,6 +601,7 @@ WAVES = {
         "weeks_c": "W17-19",
         "agents": [4, 5],
         "description": "Lowest risk — test/dev environments, sandbox accounts, proof-of-concept. Validates production pipeline at scale.",
+        "description_b": "KeeperPAM: Validates Shared Folder creation and 3-tier PAM hierarchy build at scale. Post-import transform accuracy logged per batch. First real-world validation of Keeper Gateway rotation scripts.",
         "gate": "g7",
         "status": "complete",
         "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE VAULTS", "IMPORT", "HEARTBEAT", "INTEGRITY", "UNFREEZE"],
@@ -615,6 +619,7 @@ WAVES = {
         "weeks_c": "W21-22",
         "agents": [4, 5],
         "description": "Domain admin accounts, database service accounts, network infrastructure. Tight change windows required.",
+        "description_b": "KeeperPAM: Domain admin rotation via Keeper Gateway (Windows Domain platform). KCM session recording verified for all domain admin access. Database PAM Resources built with 3-tier hierarchy — validate pamUser/pamDatabase linkage before unfreeze.",
         "gate": "g8",
         "status": "complete",
         "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE VAULTS", "IMPORT", "HEARTBEAT", "INTEGRITY", "UNFREEZE"],
@@ -632,6 +637,7 @@ WAVES = {
         "weeks_c": "W23-24",
         "agents": [4, 5, 12],
         "description": "Non-human identities without CCP/AAM integrations. Agent 12 provides rotation policies. Dependency graph respected.",
+        "description_b": "KeeperPAM: NHI rotation via Keeper Gateway (~25-30 supported platforms). Custom Gateway scripts required for network devices (IOS/NX-OS/ASA). Validate each NHI subtype rotation script in staging before wave start — one failed rotation at batch scale stops the wave.",
         "gate": "g9",
         "status": "complete",
         "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE VAULTS", "IMPORT", "HEARTBEAT", "INTEGRITY", "UNFREEZE"],
@@ -649,10 +655,11 @@ WAVES = {
         "weeks_c": "W25-26",
         "agents": [4, 5, 6],
         "description": "HIGHEST RISK — service accounts with active CCP/AAM integrations. Agent 06 prepares replacement code BEFORE migration. Per-app sign-off required.",
+        "description_b": "KeeperPAM: CCP/AAM → KSM SDK full re-architecture. Agent 06 generates KSM SDK replacement packages (Python/Java/C#/.NET). 40+ native integrations available — audit apps against this list first (K8s, Terraform, Ansible, GitHub Actions use native plugins, not custom code). Feature-flag toggle between CyberArk and KeeperPAM endpoints for safe rollback.",
         "gate": "g10",
         "status": "complete",
         "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "RECODE INTEGRATIONS", "CREATE VAULTS", "IMPORT", "HEARTBEAT", "UNFREEZE"],
-        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "RECODE INTEGRATIONS", "BUILD HIERARCHY", "BULK IMPORT", "POST-IMPORT TRANSFORM", "UNFREEZE"],
+        "etl_steps_b": ["FREEZE", "EXPORT", "TRANSFORM", "RECODE KSM SDK", "BUILD HIERARCHY", "BULK IMPORT", "POST-IMPORT TRANSFORM", "UNFREEZE"],
         "etl_steps_c": ["FREEZE", "EXPORT", "TRANSFORM", "UPDATE ENDPOINTS", "CREATE RESOURCE GROUPS", "IMPORT", "UNFREEZE"],
     },
     "5": {
@@ -666,6 +673,7 @@ WAVES = {
         "weeks_c": "W27-28",
         "agents": [4, 5, 7, 14],
         "description": "Remaining accounts, newly discovered applications, compliance report generation, 100% coverage reconciliation.",
+        "description_b": "KeeperPAM: Final bulk wave — validates 3-tier hierarchy completeness and KSM SDK integration count. Compliance evidence collected for 12 unrepresentable-permission risk acceptances. Agent 07 generates KeeperPAM-specific compliance report (FedRAMP, PCI-DSS scope, audit discontinuity acknowledgement).",
         "gate": "g11",
         "status": "complete",
         "etl_steps_a": ["FREEZE", "EXPORT", "TRANSFORM", "CREATE VAULTS", "IMPORT", "HEARTBEAT", "INTEGRITY", "UNFREEZE"],
@@ -690,7 +698,7 @@ GATES = [
         "sod": {
             "iOPEX": "Presents migration plan, configures orchestration VM, runs preflight connectivity checks against CyberArk PVWA and target endpoints",
             "cisco": "Exec Sponsor authorizes scope, budget, and timeline. NOC/Infra independently confirms VM provisioning and network segments are ready.",
-            "rule": "Cisco must independently authorize engagement start and confirm environment readiness before iOPEX has write access to any system",
+            "rule": "Enterprise client must independently authorize engagement start and confirm environment readiness before iOPEX has write access to any system",
             "blocker": "iOPEX cannot self-authorize scope, timeline, or resource allocation — Exec Sponsor sign-off required before work begins",
         },
     },
@@ -724,8 +732,8 @@ GATES = [
         "sod": {
             "iOPEX": "Delivers all P1 discovery deliverables: discovery manifest, dependency graph, NHI classifications, gap analysis, permission audit. Presents findings.",
             "cisco": "Compliance independently reviews gap analysis results and accepts or rejects risk. Exec Sponsor approves full scope before P2 budget commitment. Security Architect signs off on permission loss findings.",
-            "rule": "Permission loss findings and compliance gaps must be accepted by Cisco Compliance and Security — the migration integrator cannot accept compliance risk on Cisco's behalf",
-            "blocker": "iOPEX cannot approve their own gap analysis or accept compliance findings — independent Cisco Compliance sign-off is mandatory before Phase 2",
+            "rule": "Permission loss findings and compliance gaps must be accepted by Enterprise Compliance and Security — the migration integrator cannot accept compliance risk on the client's behalf",
+            "blocker": "iOPEX cannot approve their own gap analysis or accept compliance findings — independent Enterprise Compliance sign-off is mandatory before Phase 2",
         },
     },
     {
@@ -741,7 +749,7 @@ GATES = [
         "sod": {
             "iOPEX": "Runs Agent 10 staging validation — 10-assertion mini-ETL with 100 sample accounts. Documents all assertion results and staging environment configuration.",
             "cisco": "NOC/Infra confirms staging environment is representative of production topology, network paths, and system versions — only the infrastructure team can make this declaration.",
-            "rule": "Infrastructure team must independently confirm staging reflects production — iOPEX cannot assess whether a Cisco environment is production-representative",
+            "rule": "Infrastructure team must independently confirm staging reflects production — iOPEX cannot assess whether the client's environment is production-representative",
             "blocker": "iOPEX cannot declare staging 'production-ready' — NOC/Infra must independently validate the environment",
         },
     },
@@ -758,8 +766,8 @@ GATES = [
         "sod": {
             "iOPEX": "Runs Agent 03 permission mapping. Produces escalation report showing all permission losses, escalations, and risk cases.",
             "cisco": "Security Architect MUST independently review every escalation flag. PAM Owner confirms safe membership accuracy before mapping is locked. CAB approves pilot CHG.",
-            "rule": "PCI-DSS 7.1 dual-control requirement: the team that performs permission mapping cannot also approve it. Cisco Security must independently sign off on all escalations.",
-            "blocker": "iOPEX cannot approve the permission mapping output — this is a PCI-DSS 7.1 violation. Cisco Security Architect sign-off is mandatory and non-delegable",
+            "rule": "PCI-DSS 7.1 dual-control requirement: the team that performs permission mapping cannot also approve it. Enterprise Security must independently sign off on all escalations.",
+            "blocker": "iOPEX cannot approve the permission mapping output — this is a PCI-DSS 7.1 violation. Enterprise Security Architect sign-off is mandatory and non-delegable",
         },
     },
     {
@@ -787,7 +795,7 @@ GATES = [
         "description": "First production wave: 698 standard Windows/Linux accounts. These are the lowest-risk accounts with no integration dependencies. Success here builds confidence for subsequent waves.",
         "inputs": ["wave1_report", "wave1_validation"],
         "unlocks": "Wave 2 \u2014 Infrastructure accounts (domain admins, service controllers) can proceed.",
-        "context_a": "Devolutions: Validates Vault creation and Entry type mapping at scale for the first time. Cisco standard Windows/Linux accounts migrated here.",
+        "context_a": "Devolutions: Validates Vault creation and Entry type mapping at scale for the first time. Standard Windows/Linux accounts migrated here.",
         "context_b": "Keeper: Validates Keeper Shared Folder creation and PAM hierarchy build at production scale. Post-import transform must succeed at batch volume.",
         "sod": {
             "iOPEX": "Executes Wave 1 ETL (698 standard accounts), monitors Agent 04/05/18 results, presents validation report.",
@@ -810,7 +818,7 @@ GATES = [
             "iOPEX": "Executes Wave 2 ETL (498 infrastructure/domain accounts), monitors domain admin rotation results.",
             "cisco": "NOC/Infra independently verifies domain controllers and critical services are functioning normally post-migration. DBA team confirms database service account access.",
             "rule": "Infrastructure credential verification must be performed by the infrastructure team — only NOC/Infra can confirm their systems are healthy",
-            "blocker": "iOPEX cannot confirm domain admin access works in Cisco's infrastructure — that declaration belongs to NOC/Infra",
+            "blocker": "iOPEX cannot confirm domain admin access works in Enterprise's infrastructure — that declaration belongs to NOC/Infra",
         },
     },
     {
@@ -821,7 +829,7 @@ GATES = [
         "description": "Highest-risk wave: 554 non-human identities (service accounts, API keys, bots). Compliance must verify rotation policies are active. Each NHI owner has 48 hours to confirm their automated systems still function.",
         "inputs": ["wave3_report", "wave3_validation"],
         "unlocks": "Wave 4 \u2014 CCP/AAM integration accounts (accounts used by applications via API) can proceed.",
-        "context_a": "Devolutions: NHI rotation strategies must be reimplemented using RDM Agent rotation scripts. Cisco service account types require custom scripts per NHI subtype.",
+        "context_a": "Devolutions: NHI rotation strategies must be reimplemented using RDM Agent rotation scripts. Enterprise service account types require custom scripts per NHI subtype.",
         "context_b": "Keeper: NHI rotation via Keeper Gateway. Custom Gateway scripts required for Cisco-specific NHI types (IOS devices, ASA accounts). Validate each NHI subtype rotation in staging before Wave 3.",
         "sod": {
             "iOPEX": "Executes Wave 3 ETL (554 NHI accounts), verifies rotation policies are configured in target, notifies all NHI owners.",
@@ -841,10 +849,10 @@ GATES = [
         "context_a": "Devolutions: Full application re-architecture required. CCP/AAM calls replaced with Devolutions REST API + RDM Agent SDK. Agent 06 generates replacement code in Python, Java, C#, PowerShell.",
         "context_b": "Keeper: Full re-architecture required. CCP/AAM replaced with KSM SDK — 40+ native integrations available. Agent 06 generates KSM SDK replacement packages. Highest value wave for Keeper's DevOps story.",
         "sod": {
-            "iOPEX": "Runs Agent 06 integration repointing, deploys KSM SDK or Devolutions REST replacement code per application. Hands off to Cisco dev teams for validation.",
+            "iOPEX": "Runs Agent 06 integration repointing, deploys KSM SDK or Devolutions REST replacement code per application. Hands off to Enterprise dev teams for validation.",
             "cisco": "Dev Leads independently validate that their application code changes work correctly in production. App Owners confirm end-to-end application functionality.",
-            "rule": "Integration code deployed to Cisco production systems requires Cisco developer sign-off — the integration partner cannot approve code changes in the client's production environment",
-            "blocker": "iOPEX cannot approve production application code deployments at Cisco — each Cisco Dev Lead must independently sign off on their application",
+            "rule": "Integration code deployed to Enterprise production systems requires Enterprise developer sign-off — the integration partner cannot approve code changes in the client's production environment",
+            "blocker": "iOPEX cannot approve production application code deployments at Enterprise client — each Enterprise Dev Lead must independently sign off on their application",
         },
     },
     {
@@ -860,7 +868,7 @@ GATES = [
         "sod": {
             "iOPEX": "Produces final reconciliation report (source count = target count), compiles compliance evidence packages for PCI-DSS, NIST 800-53, HIPAA, and SOX.",
             "cisco": "Compliance independently verifies source count matches target count and all evidence packages are complete. PAM Owner confirms no accounts are missing.",
-            "rule": "Migration completeness is declared by Cisco Compliance, not the migration integrator — independent verification of the final state is a compliance requirement",
+            "rule": "Migration completeness is declared by Enterprise Compliance, not the migration integrator — independent verification of the final state is a compliance requirement",
             "blocker": "iOPEX cannot declare migration complete — Compliance must independently verify account completeness and evidence package integrity",
         },
     },
@@ -878,7 +886,7 @@ GATES = [
             "iOPEX": "Produces integration cutover registry, maintains rollback readiness, supports each application team through their cutover confirmation.",
             "cisco": "Dev Leads individually sign off per application. App Owners confirm production applications are fully operational on the target system.",
             "rule": "Production application cutover decisions belong to the application team — the integrator enables the cutover but cannot authorize it",
-            "blocker": "iOPEX cannot authorize a Cisco production application to cut over — each application team owns their go/no-go decision",
+            "blocker": "iOPEX cannot authorize an Enterprise production application to cut over — each application team owns their go/no-go decision",
         },
     },
     {
@@ -894,7 +902,7 @@ GATES = [
         "sod": {
             "iOPEX": "Presents parallel-run metrics, final validation report, and complete evidence packages. Executes source set-to-read-only on explicit authorization.",
             "cisco": "CAB authorizes the change. Exec Sponsor provides program-level authorization. Compliance confirms evidence packages are complete and audit-ready.",
-            "rule": "Point-of-no-return gate: iOPEX presents the case but has zero approval authority. All three Cisco approvers (CAB, Exec Sponsor, Compliance) must independently authorize.",
+            "rule": "Point-of-no-return gate: iOPEX presents the case but has zero approval authority. All three Enterprise approvers (CAB, Exec Sponsor, Compliance) must independently authorize.",
             "blocker": "iOPEX cannot set the source CyberArk to read-only without explicit CAB + Exec Sponsor approval. This is the highest-authority gate in the program.",
         },
     },
@@ -911,8 +919,8 @@ GATES = [
         "sod": {
             "iOPEX": "Executes decommission runbook, archives audit logs, delivers ops knowledge transfer documentation and runbooks. iOPEX engagement ends at this gate.",
             "cisco": "Operations formally accepts ownership of the target PAM platform. Compliance confirms audit retention is in place. Exec Sponsor closes the program.",
-            "rule": "Cisco Operations must formally accept platform ownership before iOPEX engagement ends — the client, not the integrator, declares the migration complete and assumes operational responsibility",
-            "blocker": "iOPEX cannot decommission Cisco infrastructure without explicit authorization. Operations ownership acceptance is required — iOPEX cannot transfer ownership to themselves.",
+            "rule": "Enterprise Operations must formally accept platform ownership before iOPEX engagement ends — the client, not the integrator, declares the migration complete and assumes operational responsibility",
+            "blocker": "iOPEX cannot decommission Enterprise infrastructure without explicit authorization. Operations ownership acceptance is required — iOPEX cannot transfer ownership to themselves.",
         },
     },
     {
@@ -928,8 +936,8 @@ GATES = [
         "sod": {
             "iOPEX": "Presents PamVendorAdapter interface contract, OpenAPI spec, and deployment topology design.",
             "cisco": "Architecture Board independently reviews and approves the technical design. Security reviews the adapter security model.",
-            "rule": "Architecture decisions for Cisco's developer portal must be approved by Cisco's Architecture Board — the integrator proposes, the client approves",
-            "blocker": "iOPEX cannot approve their own architecture design for Cisco's production portal",
+            "rule": "Architecture decisions for Enterprise developer portal must be approved by Enterprise Architecture Board — the integrator proposes, the client approves",
+            "blocker": "iOPEX cannot approve their own architecture design for Enterprise production portal",
         },
     },
     {
@@ -944,9 +952,9 @@ GATES = [
         "context_b": "Keeper: MVP demonstrates Keeper Vault credential checkout and KCM session recording.",
         "sod": {
             "iOPEX": "Demonstrates the portal MVP: login flow, secret browsing, credential checkout, audit log viewing.",
-            "cisco": "PAM Engineer and UX stakeholders validate the developer workflow meets Cisco's requirements. UX sign-off confirms usability.",
-            "rule": "Product acceptance belongs to the client — Cisco stakeholders must independently validate the portal meets their requirements",
-            "blocker": "iOPEX cannot sign off on their own deliverable — Cisco PAM Engineer and UX must independently validate",
+            "cisco": "PAM Engineer and UX stakeholders validate the developer workflow meets Enterprise requirements. UX sign-off confirms usability.",
+            "rule": "Product acceptance belongs to the client — Enterprise stakeholders must independently validate the portal meets their requirements",
+            "blocker": "iOPEX cannot sign off on their own deliverable — Enterprise PAM Engineer and UX must independently validate",
         },
     },
     {
@@ -962,8 +970,8 @@ GATES = [
         "sod": {
             "iOPEX": "Executes production deployment, confirms all adapters are green, presents load test and security scan results.",
             "cisco": "Operations confirms SLA commitments are acceptable. Security independently validates no vulnerabilities in production.",
-            "rule": "Production portal security sign-off belongs to Cisco Security — the integrator cannot certify the security posture of a system they built",
-            "blocker": "iOPEX cannot approve the security posture of their own product for Cisco production deployment — independent Security sign-off required",
+            "rule": "Production portal security sign-off belongs to Enterprise Security — the integrator cannot certify the security posture of a system they built",
+            "blocker": "iOPEX cannot approve the security posture of their own product for Enterprise production deployment — independent Security sign-off required",
         },
     },
 ]
@@ -1970,7 +1978,7 @@ COMPARISON_ROWS = [
         "category": "Timeline",
         "a": {"value": "44 weeks — cross-vendor, data model change, integration re-architecture", "risk": "high"},
         "b": {"value": "36 weeks — SaaS deployment fast; 3-tier hierarchy rebuild adds complexity", "risk": "medium"},
-        "c": {"value": "32 weeks — simpler architecture; PAM feature depth trade-off at Cisco scale", "risk": "medium"},
+        "c": {"value": "32 weeks — simpler architecture; PAM feature depth trade-off at enterprise scale", "risk": "medium"},
     },
     {
         "category": "Authentication",
@@ -2011,7 +2019,7 @@ COMPARISON_ROWS = [
     {
         "category": "Connectors",
         "a": {"value": "RDM Agent + Devolutions Gateway (deployable on-prem per network segment).", "risk": "medium"},
-        "b": {"value": "Keeper Gateway (Docker, 4 CPU/16GB per node). HA cluster required for Cisco at 250K+.", "risk": "medium"},
+        "b": {"value": "Keeper Gateway (Docker, 4 CPU/16GB per node). HA cluster required at enterprise scale (250K+).", "risk": "medium"},
         "c": {"value": "MiniOrange Agent (Windows/Linux). Less mature connector ecosystem than Devolutions/Keeper.", "risk": "high"},
     },
     {
@@ -2027,10 +2035,10 @@ COMPARISON_ROWS = [
         "c": {"value": "Cannot migrate from CyberArk. Limited session recording in MiniOrange. Highest continuity gap.", "risk": "high"},
     },
     {
-        "category": "Custom Platforms (Cisco Gear)",
+        "category": "Custom Platforms (Network Gear)",
         "a": {"value": "Custom scripts via RDM Agent. IOS/NX-OS/ASA/Meraki — good custom script ecosystem.", "risk": "medium"},
         "b": {"value": "Custom Gateway scripts required. IOS/NX-OS/ASA needs custom Gateway plugin development.", "risk": "high"},
-        "c": {"value": "Very limited. Most Cisco network platforms require manual workarounds.", "risk": "high"},
+        "c": {"value": "Very limited. Most enterprise network platforms require manual workarounds.", "risk": "high"},
     },
     {
         "category": "Zero-Knowledge Encryption",
@@ -2040,15 +2048,15 @@ COMPARISON_ROWS = [
     },
     {
         "category": "FedRAMP",
-        "a": {"value": "No FedRAMP authorization. Relevant gap for Cisco government/defense contracts.", "risk": "high"},
-        "b": {"value": "FedRAMP High authorized (March 2026). Relevant for Cisco US government engagements.", "risk": "low"},
-        "c": {"value": "No FedRAMP authorization. Relevant gap for Cisco government/defense contracts.", "risk": "high"},
+        "a": {"value": "No FedRAMP authorization. Relevant gap for government/defense contracts.", "risk": "high"},
+        "b": {"value": "FedRAMP High authorized (March 2026). Relevant for US government engagements.", "risk": "low"},
+        "c": {"value": "No FedRAMP authorization. Relevant gap for government/defense contracts.", "risk": "high"},
     },
     {
-        "category": "Scale at Cisco (50K–250K)",
+        "category": "Scale at Enterprise (50K–250K)",
         "a": {"value": "Possible with architecture review. Mid-market heritage — validate at 100K+ before full commit.", "risk": "medium"},
         "b": {"value": "50K manageable; 250K requires HA Gateway cluster design. Known coordination overhead.", "risk": "medium"},
-        "c": {"value": "Untested at Cisco scale. Highest risk for 250K account volume. Validate in PoC first.", "risk": "high"},
+        "c": {"value": "Untested at enterprise scale. Highest risk for 250K account volume. Validate in PoC first.", "risk": "high"},
     },
     {
         "category": "DevOps / NHI (CI/CD, K8s)",
@@ -2057,10 +2065,10 @@ COMPARISON_ROWS = [
         "c": {"value": "REST API only. No native DevOps integrations. Manual SDK integration required.", "risk": "high"},
     },
     {
-        "category": "Recommendation for Cisco",
+        "category": "Migration Recommendation",
         "a": {"value": "SECONDARY — Best session management layer. Strong for hybrid/on-prem. Validate scale at 250K.", "risk": "medium"},
         "b": {"value": "PRIMARY — Strongest PAM+DevOps story. Zero-knowledge. FedRAMP High. Validate Gateway HA.", "risk": "low"},
-        "c": {"value": "COMPLEMENTARY — Best as MFA/SSO layer. Not recommended as standalone PAM at Cisco scale.", "risk": "high"},
+        "c": {"value": "COMPLEMENTARY — Best as MFA/SSO layer. Not recommended as standalone PAM at enterprise scale.", "risk": "high"},
     },
 ]
 
@@ -2436,8 +2444,8 @@ YELLOW_CHECKPOINTS = [
             "what_fired": "Agent 04 Migration Pipeline received connection refused errors from Keeper Gateway on port 443 (Gateway-to-Keeper-Cloud tunnel) at minute 34 of Wave 3 bulk import. The Gateway Docker container was OOM killed — the host VM had 14GB RAM but the Gateway process peaked at 16GB during the 554-account NHI bulk import batch. Agents 04, 05, and 18 cannot proceed without Gateway connectivity. 847 accounts remain pending across waves 3 and 4.",
             "root_cause": "Keeper Gateway recommended spec is 4 CPU / 16GB RAM minimum. The Gateway host VM was provisioned at 14GB. During bulk import of 554 NHI accounts (wave 3), the Gateway's in-memory transformation pipeline peaked at 16.2GB. Docker OOM killer terminated the container before the monitoring alert (90% memory threshold) could fire — the spike was too fast. The 10-call/min batch pause from yc-b01 reduced API throttle risk but did not reduce Gateway memory consumption — the Gateway buffers all in-flight records in memory during PAM hierarchy build.",
             "cross_system_context": "Agent 18 Integrity Validator runs post-import and requires Gateway for heartbeat checks — it cannot validate the Wave 3 accounts that were mid-flight when the OOM occurred. Agent 05 heartbeat queue has 847 pending accounts. Agent 04's watchdog timer auto-unfreeze is still running — accounts will unfreeze in CyberArk at the 120-minute mark regardless of Gateway status, creating a window where credentials exist in both source and target without rotation.",
-            "risk_assessment": "High — accounts are in frozen state in CyberArk source and partially imported in Keeper target. Watchdog auto-unfreeze at T+120min will unfreeze source, potentially leaving Keeper import incomplete. Gateway being down also blocks Agent 05 heartbeat and Agent 18 integrity checks. Cisco scale (250K accounts) requires HA Gateway cluster — single-node deployment is a critical architecture gap.",
-            "recommended_action": "Immediately restart Gateway container on host with 20GB+ RAM (or emergency-provision 32GB VM). Implement Gateway HA: deploy 2+ Gateway nodes with load balancing before Wave 4. Add pre-wave memory check: assert Gateway host free memory > 10GB before starting bulk import. Set Docker memory limit to 15GB to trigger graceful backpressure (OOMError) instead of silent kill. For Cisco-scale deployment, plan for 4+ Gateway nodes in active-active cluster.",
+            "risk_assessment": "High — accounts are in frozen state in CyberArk source and partially imported in Keeper target. Watchdog auto-unfreeze at T+120min will unfreeze source, potentially leaving Keeper import incomplete. Gateway being down also blocks Agent 05 heartbeat and Agent 18 integrity checks. enterprise scale (250K accounts) requires HA Gateway cluster — single-node deployment is a critical architecture gap.",
+            "recommended_action": "Immediately restart Gateway container on host with 20GB+ RAM (or emergency-provision 32GB VM). Implement Gateway HA: deploy 2+ Gateway nodes with load balancing before Wave 4. Add pre-wave memory check: assert Gateway host free memory > 10GB before starting bulk import. Set Docker memory limit to 15GB to trigger graceful backpressure (OOMError) instead of silent kill. For enterprise-scale deployment, plan for 4+ Gateway nodes in active-active cluster.",
         },
         "resolved_by": "Agent 04 operator + Infrastructure Team",
         "resolution_note": "Emergency-provisioned 32GB VM for Gateway host. Restarted Gateway container — reconnected in 4 minutes. Resumed Wave 3 from batch checkpoint (554 accounts, picked up at account 312). Wave 3 completed with 552/554 success. Added pre-wave memory assertion to Agent 04 runbook. Gateway HA cluster (2 nodes) provisioned for Wave 4 onward.",
@@ -2458,9 +2466,9 @@ YELLOW_CHECKPOINTS = [
         "ai_rationale": {
             "what_fired": "Agent 13 Platform Plugin Validator required deployment of Keeper Gateway (Docker) in the DMZ-PROD-02 network zone to validate rotation scripts against production-equivalent target systems (Cisco IOS/NX-OS, Oracle DB). The network automation pipeline rejected the container deployment because DMZ-PROD-02 is classified as a 'restricted' zone under network segmentation policy NSP-2024-017. The deployment was blocked pending Network Security (NSEC) team approval.",
             "root_cause": "Keeper Gateway establishes a persistent outbound HTTPS connection (port 443) to keepersecurity.com cloud APIs. The organization's network segmentation policy requires explicit NSEC approval for any new persistent outbound connections from restricted zones. The Cisco network gear (IOS/NX-OS/ASA) that the Gateway must reach for rotation validation is only accessible from DMZ-PROD-02 due to existing firewall rules. Additionally, the Gateway requires Docker runtime which must be approved separately under the container deployment policy (CDP-2024-003).",
-            "cross_system_context": "Agent 04 ETL wave migrations require Gateway connectivity to perform post-import rotation verification. Agent 05 heartbeat checks use the Gateway to verify credential rotation success. Agent 18 Integrity Validator's IC_09 (rotation policy) check cannot pass without Gateway. Gateway is a single point of dependency for all production-phase agents — Cisco-scale deployment requires 2+ Gateway nodes in HA cluster.",
+            "cross_system_context": "Agent 04 ETL wave migrations require Gateway connectivity to perform post-import rotation verification. Agent 05 heartbeat checks use the Gateway to verify credential rotation success. Agent 18 Integrity Validator's IC_09 (rotation policy) check cannot pass without Gateway. Gateway is a single point of dependency for all production-phase agents — enterprise-scale deployment requires 2+ Gateway nodes in HA cluster.",
             "risk_assessment": "NSEC approval SLA is 5 business days — risks pushing Phase 2 deadline and delaying Phase 3. Docker runtime approval adds another 3 business days. Together this could delay Phase 3 start by 8 business days. No Gateway = no rotation validation = Gate G4 (Staging Approval) cannot be achieved.",
-            "recommended_action": "Submit CHG0008891 with NSEC approval request including Keeper Gateway network flow (outbound only, TLS 1.3, port 443 to keepersecurity.com), Keeper security whitepaper, and SOX justification. In parallel submit Docker container runtime approval under CDP-2024-003. Plan for 2-node Gateway HA cluster in DMZ-PROD-02 (primary) and APP-PROD-01 (secondary) for Cisco-scale resilience.",
+            "recommended_action": "Submit CHG0008891 with NSEC approval request including Keeper Gateway network flow (outbound only, TLS 1.3, port 443 to keepersecurity.com), Keeper security whitepaper, and SOX justification. In parallel submit Docker container runtime approval under CDP-2024-003. Plan for 2-node Gateway HA cluster in DMZ-PROD-02 (primary) and APP-PROD-01 (secondary) for enterprise-scale resilience.",
         },
         "resolved_by": "Network Security Team + PAM Platform Team + Change Advisory Board",
         "resolution_note": "CHG0008891 approved 2025-05-19. Firewall rule FR-2025-0892 created for DMZ-PROD-02 outbound to keepersecurity.com:443. Docker runtime approved under CDP-2024-003. Keeper Gateway deployed (2 nodes: DMZ-PROD-02 + APP-PROD-01 in HA). Agent 13 validated Gateway connectivity and rotation scripts for all 14 platform types including CiscoDevice (IOS) and Oracle. No impact to Phase 3 start date.",
@@ -2482,7 +2490,7 @@ YELLOW_CHECKPOINTS = [
             "what_fired": "Agent 15 Hybrid Fleet Manager detected sustained HTTP 403 throttle responses from Keeper Cloud API at the 90% traffic shift milestone. 2,560 concurrent credential retrievals were generating ~340 API calls/min against Keeper's 50 calls/min per-vault ceiling. Over 18 minutes, 412 requests received HTTP 403 `{\"error\": \"throttled\"}`. Keeper's CUMULATIVE throttle window extended with each violation — the throttle window grew from 60s to 8 minutes over the incident, causing cascading delays across all agents.",
             "root_cause": "Keeper's throttle ceiling (50 calls/min) is per-vault, not per-client. At 90% traffic shift with 2,560 concurrent sessions, parallel credential lookups from KSM clients, Agent 04 ETL, and Agent 05 heartbeat checks all competed against the same vault ceiling. Keeper's cumulative window behavior (each violation extends the throttle window) is fundamentally different from standard exponential backoff — the throttle worsened over the 18-minute window instead of recovering. The per-vault ceiling cannot be raised by support request; it is a platform architectural limit. Multiple Keeper Vault shards or KSM application access patterns must be redesigned to distribute load.",
             "cross_system_context": "Agent 04's 10-call/cycle batch limit (from yc-b01 fix) was sufficient for sequential migration but insufficient for concurrent parallel-run load. Agent 05 heartbeat and Agent 18 Integrity Validator were also throttled during the incident. KSM SDK clients (40+ app integrations) independently add load to the same vault endpoint — their calls are not subject to the migration agent rate limiter.",
-            "risk_assessment": "At Cisco scale (250K accounts), parallel-run concurrent load will exceed the per-vault ceiling by design. 100% cutover at current architecture will be throttle-bound. KSM application access can be separated onto dedicated vault shards to reduce per-vault load, but this requires restructuring the Keeper vault architecture before full cutover.",
+            "risk_assessment": "At enterprise scale (250K accounts), parallel-run concurrent load will exceed the per-vault ceiling by design. 100% cutover at current architecture will be throttle-bound. KSM application access can be separated onto dedicated vault shards to reduce per-vault load, but this requires restructuring the Keeper vault architecture before full cutover.",
             "recommended_action": "Restructure KSM application access onto dedicated vault shards (separate from migration vault). Implement priority-lane queuing: P1 = KSM app runtime, P2 = Agent 04 ETL, P3 = Agent 05/18 validation. Add client-side request coalescing for duplicate KSM lookups within 5s window. Hold at 90% traffic shift until vault sharding is complete and tested at full load.",
         },
         "resolved_by": "Keeper Platform Team + Agent 15 operator",
@@ -2505,7 +2513,7 @@ YELLOW_CHECKPOINTS = [
             "what_fired": "During parallel-run at 100% traffic shift, Agent 15 detected a credential mismatch for account 'jsmith-prod-01' — the password hash in the source CyberArk vault does not match the password stored in the Keeper target after the last Gateway rotation cycle at 06:00 UTC. Agent 15's credential reconciliation check (run every 6 hours) flagged the divergence at 08:22 UTC. The account is associated with a Windows domain service account used by a production batch processing application.",
             "root_cause": "HRMS records show two entries for 'John Smith': EMP-2019-4521 (original hire, terminated 2024-06-15) and EMP-2025-0089 (rehired 2025-11-01 into a different role — now Junior Operations Analyst). The Keeper Shared Folder membership was migrated with the original 22 CyberArk permissions collapsed to Keeper 4-axis model. When John Smith was rehired, IT provisioning created a new AD account but the old service account 'jsmith-prod-01' was never deprovisioned in CyberArk. The Keeper Gateway rotated the password on the target side, but source-side CPM had already been disabled at 90% traffic shift, causing divergence.",
             "cross_system_context": "Agent 03 Permission Mapper collapsed CyberArk 22 permissions to Keeper's 4 boolean axes — technically correct per the mapping matrix but the Keeper permission model has no mechanism to flag that the source account had 'manage_records: True' which is now mapped to a Junior Analyst who should have 'can_edit: False'. The 4-axis compression masked the over-provisioning that a 22-permission model would have made explicit. Agent 04 ETL processed this account in Wave 2 without flagging employment status — migration criteria only checked account validity.",
-            "risk_assessment": "Dual risk: credential mismatch (operational — APP-BATCH-017 could fail at 02:00 UTC nightly run) and over-provisioned Keeper membership (compliance — SOX Section 404, SOD violation). The permission collapse risk is systemic at Cisco scale — if one rehired employee was over-provisioned, the HRMS re-correlation scan may find dozens more across 50K+ accounts.",
+            "risk_assessment": "Dual risk: credential mismatch (operational — APP-BATCH-017 could fail at 02:00 UTC nightly run) and over-provisioned Keeper membership (compliance — SOX Section 404, SOD violation). The permission collapse risk is systemic at enterprise scale — if one rehired employee was over-provisioned, the HRMS re-correlation scan may find dozens more across 50K+ accounts.",
             "recommended_action": "Immediately verify with HR which employee record (EMP-2019-4521 or EMP-2025-0089) is authoritative for 'jsmith-prod-01' access. If the account should be owned by the rehired employee, review safe membership against the Junior Operations Analyst role requirements and remove any permissions not justified by the new role. Force a credential sync between source and target to resolve the password mismatch — determine which side has the correct password by checking APP-BATCH-017's last successful authentication. Initiate a full HRMS re-correlation scan across all 20,247 migrated accounts to identify other rehired employees whose permissions may have been silently carried forward. This pattern represents a systemic gap in the Option B migration — 1:1 parity preserves over-provisioning that would have been caught by Option A's lossy mapping review process. Do NOT resolve this checkpoint until the full HRMS scan is complete and all affected accounts are remediated.",
         },
         "resolved_by": None,

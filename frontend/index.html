@@ -15,14 +15,9 @@
   <div class="sidebar-logo">SHIFT</div>
   <div class="sidebar-sub">Secure Hybrid Identity & Function Transfer</div>
 
-  <div class="option-switch">
-    <button class="option-btn active" id="opt-a" onclick="switchOption('a')">Devolutions</button>
-    <button class="option-btn" id="opt-b" onclick="switchOption('b')">Keeper</button>
-    <button class="option-btn" id="opt-c" onclick="switchOption('c')">MiniOrange</button>
-  </div>
   <div class="option-indicator" id="optionIndicator"
-       style="background:var(--blue-dim);color:var(--blue);">
-    DEVOLUTIONS: RDM + DEVOLUTIONS SERVER
+       style="background:var(--green-dim);color:var(--green);">
+    KEEPERPAM — LIVE MIGRATION TARGET
   </div>
 
   <button class="nav-link active" onclick="showPage('mission',this)">
@@ -45,9 +40,6 @@
   </button>
   <button class="nav-link" onclick="showPage('yellow',this)">
     <span class="nav-icon">&#x26A0;</span> Yellow Checkpoints
-  </button>
-  <button class="nav-link" onclick="showPage('compare',this)">
-    <span class="nav-icon">&#x2194;</span> Comparison
   </button>
   <button class="nav-link" onclick="showPage('pamfile',this)">
     <span class="nav-icon">&#x25B7;</span> Life of a PAM File
@@ -73,7 +65,7 @@
 
   <div class="sidebar-footer">
     iOPEX SHIFT v2.1<br>
-    <span id="weekPlanLabel">44-WEEK PLAN</span> / 15+3 AGENTS<br>
+    <span id="weekPlanLabel">80-WEEK PLAN</span> / 15+3 AGENTS<br>
     FastAPI + Vanilla JS
   </div>
 </nav>
@@ -85,7 +77,7 @@
   <div class="page active" id="page-mission">
     <div class="page-header">
       <div class="page-title">Mission Control</div>
-      <div class="page-subtitle" id="missionSubtitle">80-Week PAM Migration — Real-Time Dashboard</div>
+      <div class="page-subtitle" id="missionSubtitle">80-Week CyberArk → KeeperPAM Migration — Real-Time Dashboard</div>
     </div>
     <!-- Life of a PAM File Banner -->
     <div class="pam-life-banner" onclick="showPage('pamfile',document.querySelector('[onclick*=pamfile]'))">
@@ -280,15 +272,6 @@
     <div id="yellowCheckpoints"></div>
   </div>
 
-  <!-- ──── COMPARISON ──── -->
-  <div class="page" id="page-compare">
-    <div class="page-header">
-      <div class="page-title">Option Comparison</div>
-      <div class="page-subtitle" id="compareSubtitle">Devolutions vs Keeper Security vs MiniOrange — Cisco Migration Target Evaluation</div>
-    </div>
-    <div id="comparisonContent"></div>
-  </div>
-
   <!-- ──── LIFE OF A PAM FILE ──── -->
   <div class="page" id="page-pamfile">
     <div class="page-header">
@@ -329,7 +312,7 @@
   <div class="page" id="page-securityqa">
     <div class="page-header">
       <div class="page-title">Security Q&amp;A</div>
-      <div class="page-subtitle">Deep Dive — Cisco Security Architect Review &bull; Encryption &bull; Compliance &bull; NHI &bull; Pentest</div>
+      <div class="page-subtitle">Deep Dive — Enterprise Security Architect Review &bull; Encryption &bull; Compliance &bull; NHI &bull; Pentest</div>
     </div>
     <div id="securityQAContent"></div>
   </div>
@@ -374,7 +357,6 @@
 <script src="/js/agents.js"></script>
 <script src="/js/waves.js"></script>
 <script src="/js/gates.js"></script>
-<script src="/js/compare.js"></script>
 <script src="/js/yellow.js"></script>
 <script src="/js/accounts.js"></script>
 <script src="/js/guide.js"></script>

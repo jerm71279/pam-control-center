@@ -1,5 +1,6 @@
 /**
- * App core — page switching, option toggle, initialization.
+ * App core — page switching and initialization.
+ * KeeperPAM is the sole migration target — no option toggle.
  */
 
 let currentPage = 'mission';
@@ -20,7 +21,6 @@ function showPage(pageId, btn) {
     case 'accounts': renderAccountExplorer(); break;
     case 'gates': renderGateTracker(); break;
     case 'yellow': renderYellowCheckpoints(); break;
-    case 'compare': renderComparison(); break;
     case 'pamfile': break; // standalone iframe — no render needed
     case 'mcp': renderMcpDashboard(); break;
     case 'pmo': renderPMODashboard(); break;
@@ -29,39 +29,6 @@ function showPage(pageId, btn) {
     case 'lab': renderLabShowcase(); break;
     case 'disclaimer': renderDisclaimer(); break;
   }
-}
-
-function switchOption(opt) {
-  API.setOption(opt);
-  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('opt-' + opt).classList.add('active');
-
-  const ind = document.getElementById('optionIndicator');
-  const weekLabel = document.getElementById('weekPlanLabel');
-  const missionSub = document.getElementById('missionSubtitle');
-
-  if (opt === 'a') {
-    ind.textContent = 'DEVOLUTIONS: RDM + DEVOLUTIONS SERVER';
-    ind.style.background = 'var(--blue-dim)';
-    ind.style.color = 'var(--blue)';
-    if (weekLabel) weekLabel.textContent = '44-WEEK PLAN';
-    if (missionSub) missionSub.textContent = '44-Week PAM Migration — Real-Time Dashboard';
-  } else if (opt === 'b') {
-    ind.textContent = 'KEEPER: KEEPERPAM + KSM + KCM';
-    ind.style.background = 'var(--cyan-dim)';
-    ind.style.color = 'var(--cyan)';
-    if (weekLabel) weekLabel.textContent = '36-WEEK PLAN';
-    if (missionSub) missionSub.textContent = '36-Week PAM Migration — Real-Time Dashboard';
-  } else {
-    ind.textContent = 'MINIORANGE: PAM + IDENTITY';
-    ind.style.background = 'var(--purple-dim)';
-    ind.style.color = 'var(--purple)';
-    if (weekLabel) weekLabel.textContent = '32-WEEK PLAN';
-    if (missionSub) missionSub.textContent = '32-Week PAM Migration — Real-Time Dashboard';
-  }
-
-  // Re-render current page with new option
-  showPage(currentPage, document.querySelector('.nav-link.active'));
 }
 
 function openDrill(title, content) {

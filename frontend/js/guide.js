@@ -131,7 +131,7 @@ function renderGuide() {
   `) +
 
   _guideSection('What Is This Control Center?', `
-    <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing Cisco's large-scale CyberArk PAM migration. It provides visibility into every phase, agent, gate, and risk factor across three evaluated target platforms: <strong style="color:var(--blue)">Devolutions</strong> (44w), <strong style="color:var(--cyan)">Keeper Security</strong> (36w), and <strong style="color:var(--purple)">MiniOrange</strong> (32w). CyberArk is owned by a Cisco competitor — Cisco requires a clean, full migration off CyberArk to a vendor-neutral PAM platform.</p>
+    <p><strong>Executive summary:</strong> The SHIFT Migration Control Center is a real-time operational dashboard for managing a large-scale enterprise CyberArk PAS → KeeperPAM migration. It provides visibility into every phase, agent, gate, and risk factor across the 80-week migration engagement. <strong style="color:var(--green)">KeeperPAM</strong> is the selected target — zero-knowledge SaaS, FedRAMP High, KSM SDK replaces CCP/AAM, KCM provides browser-native session recording.</p>
     <p><strong>Technical overview:</strong> The frontend is a single-page app (Vanilla JS, no frameworks) served by a FastAPI backend. All data flows through the 15-agent AI orchestrator. Each page visualizes a different slice of the orchestrator's output — from high-level phase timelines down to individual account-level ETL results. The two MCP servers (pam-migration-mcp and SHIFT Portal) provide Model Context Protocol integration for AI-assisted operations.</p>
     <p>This control center is a <strong>demonstration/proposal tool</strong> — it uses mock data to show how the migration would be managed. In production, the backend connects to live CyberArk PVWA and target platform APIs.</p>
   `) +
@@ -412,7 +412,7 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
           ['PSM Recordings', 'Cannot migrate — RDM sessions new', 'Cannot migrate — KCM sessions new', 'Cannot migrate'],
           ['Integration Rework', 'CCP/AAM &rarr; RDM Agent scripts', 'CCP/AAM &rarr; KSM (40+ integrations)', 'CCP/AAM &rarr; REST API only'],
           ['Rotation', 'RDM Agent scripts (~custom per platform)', 'Gateway scripts (~25-30 platforms)', 'Basic scripts (~15-20 platforms)'],
-          ['Risk Level', 'Medium — flat model reduces structural risk', 'Medium — 3-tier rebuild + Cisco gear gap', 'Higher — lowest PAM depth at Cisco scale'],
+          ['Risk Level', 'Medium — flat model reduces structural risk', 'Medium — 3-tier hierarchy rebuild + network gear Gateway scripting', 'N/A — KeeperPAM is the selected target'],
         ].map(r => `
           <tr style="border-bottom:1px solid var(--border-light);">
             <td style="padding:5px 8px;font-weight:600;color:var(--text-bright);">${r[0]}</td>
@@ -494,9 +494,9 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
       </thead>
       <tbody>
         <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">CPM</td><td style="padding:5px 8px;color:var(--text-standard);">CyberArk PAS (source)</td><td style="padding:5px 8px;color:var(--text-standard);">Reads platform .ini file, connects to target system, generates new password, pushes to vault</td><td style="padding:5px 8px;color:var(--amber);">Paused during FREEZE step, re-enabled after UNFREEZE</td></tr>
-        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--blue);">RDM Agent</td><td style="padding:5px 8px;color:var(--text-standard);">Devolutions (Option A)</td><td style="padding:5px 8px;color:var(--text-standard);">Script-based via Devolutions RDM Agent. Custom rotation scripts per Entry type. No native .ini plugin format.</td><td style="padding:5px 8px;color:var(--amber);">Must be written per platform — Cisco IOS/NX-OS/ASA require custom scripts</td></tr>
-        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">Gateway</td><td style="padding:5px 8px;color:var(--text-standard);">Keeper (Option B)</td><td style="padding:5px 8px;color:var(--text-standard);">Keeper Gateway handles rotation (~25-30 platforms). Custom scripts for non-standard platforms. Docker container, 4CPU/16GB RAM.</td><td style="padding:5px 8px;color:var(--red);">Cisco network gear (IOS, NX-OS, ASA, Meraki) requires custom Gateway scripts — critical gap for Cisco</td></tr>
-        <tr><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--purple);">Agent</td><td style="padding:5px 8px;color:var(--text-standard);">MiniOrange (Option C)</td><td style="padding:5px 8px;color:var(--text-standard);">MiniOrange Agent handles ~15-20 platforms. Very limited Cisco network gear support.</td><td style="padding:5px 8px;color:var(--red);">Highest gap — most Cisco platform types unsupported natively</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--blue);">RDM Agent</td><td style="padding:5px 8px;color:var(--text-standard);">Devolutions (Option A)</td><td style="padding:5px 8px;color:var(--text-standard);">Script-based via Devolutions RDM Agent. Custom rotation scripts per Entry type. No native .ini plugin format.</td><td style="padding:5px 8px;color:var(--amber);">Must be written per platform — Enterprise network gear (IOS/NX-OS/ASA) requires custom scripts</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--cyan);">Gateway</td><td style="padding:5px 8px;color:var(--text-standard);">Keeper (Option B)</td><td style="padding:5px 8px;color:var(--text-standard);">Keeper Gateway handles rotation (~25-30 platforms). Custom scripts for non-standard platforms. Docker container, 4CPU/16GB RAM.</td><td style="padding:5px 8px;color:var(--red);">Cisco network gear (IOS, NX-OS, ASA, Meraki) requires custom Gateway scripts — requires custom Gateway scripts — validate before Wave 3</td></tr>
+        <tr><td style="padding:5px 8px;font-family:var(--font-mono);color:var(--purple);">Agent</td><td style="padding:5px 8px;color:var(--text-standard);">MiniOrange (Option C)</td><td style="padding:5px 8px;color:var(--text-standard);">MiniOrange Agent handles ~15-20 platforms. N/A.</td><td style="padding:5px 8px;color:var(--red);">N/A — KeeperPAM selected</td></tr>
       </tbody>
     </table>
 
@@ -517,19 +517,19 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
     </div>
   `) +
 
-  _guideSection('&#x1F3AF; Cisco Vendor Recommendation — Devolutions / Keeper / MiniOrange', `
+  _guideSection('&#x1F3AF; KeeperPAM — Why Keeper Was Selected', `
     <p style="margin-bottom:12px;font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
-      Cisco is migrating <strong>off CyberArk entirely</strong> (vendor is now owned by a Cisco competitor).
-      Delinea was evaluated and turned down. The three front-runners are assessed below for Cisco's scale of
+      The Enterprise client is migrating <strong>off CyberArk PAS</strong> (on-prem end-of-lifecycle decision).
+      KeeperPAM was selected as the target. Key criteria assessed at enterprise scale of
       <strong>50,000–250,000 accounts</strong> across Windows, Unix/Linux, databases, cloud IAM, and
-      Cisco-proprietary network gear (IOS, NX-OS, ASA, Meraki, Catalyst).
+      enterprise network gear (IOS, NX-OS, ASA, Meraki, Catalyst).
     </p>
 
     <div class="callout teal" style="margin-bottom:16px;">
       <div class="callout-title" style="color:var(--cyan)">&#x2714; Primary Recommendation: Keeper Security (Option B)</div>
       <p style="font-size:0.72rem;line-height:1.7;">
         <strong>Zero-knowledge AES-256-GCM</strong> encryption — server never sees plaintext secrets.<br>
-        <strong>FedRAMP High</strong> authorized (March 2026) — relevant for Cisco government engagements.<br>
+        <strong>FedRAMP High</strong> authorized (March 2026) — relevant for government/defense engagements.<br>
         <strong>KSM (Keeper Secrets Manager)</strong> — 40+ native integrations replace CCP/AAM: Kubernetes, Terraform, Ansible, GitHub Actions, AWS Secrets Manager, Azure Key Vault, Vault-compatible.<br>
         <strong>KCM (Keeper Connection Manager)</strong> — Apache Guacamole session recording, browser-native, no Windows RDS licensing.<br>
         <strong style="color:var(--amber)">Key gap:</strong> ~25-30 rotation platforms vs. CyberArk 225+. Cisco IOS/NX-OS/ASA require custom Gateway scripts. Gateway HA cluster required at 250K+ accounts (4 CPU / 16GB per node).
@@ -541,8 +541,8 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
       <p style="font-size:0.72rem;line-height:1.7;">
         <strong>Strongest session management</strong> of the three: RDM built-in (RDP, SSH, VNC, 100+ protocols), rich session recording, no extra licensing.<br>
         <strong>Flat data model</strong> (Vault → Entry) similar to CyberArk — lower structural migration risk than Keeper's 3-tier rebuild.<br>
-        <strong>Mid-market heritage</strong> — validate at 100K+ accounts before committing as sole PAM. Architecture review recommended for Cisco's 250K scale.<br>
-        <strong>Best use:</strong> Session management layer for on-prem/hybrid Cisco infrastructure. Pair with Keeper for secrets/DevOps layer.
+        <strong>Mid-market heritage</strong> — validate at 100K+ accounts before committing as sole PAM. Architecture review recommended for enterprise scale (250K+).<br>
+        <strong>Best use:</strong> Session management layer for on-prem/hybrid Enterprise infrastructure. Pair with Keeper for secrets/DevOps layer.
       </p>
     </div>
 
@@ -550,9 +550,9 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
       <div class="callout-title" style="color:var(--amber)">&#x26A0; Complementary Only: MiniOrange (Option C)</div>
       <p style="font-size:0.72rem;line-height:1.7;">
         <strong>IAM-native</strong> — best positioned as MFA/SSO enforcement layer on top of Keeper or Devolutions.<br>
-        <strong>Lowest cost</strong> of the three, but PAM feature depth is unproven at Cisco's 250K scale.<br>
-        <strong>Not recommended</strong> as standalone PAM replacement for Cisco's full privileged account estate.<br>
-        <strong>Best use:</strong> MFA front-door for Cisco's identity layer. Not a CyberArk vault replacement.
+        <strong>Lowest cost</strong> of the three, but PAM feature depth is unproven at enterprise scale (250K+).<br>
+        <strong>Not recommended</strong> as standalone PAM replacement for an enterprise privileged account estate.<br>
+        <strong>Best use:</strong> MFA front-door for the Enterprise identity layer. Not a CyberArk vault replacement.
       </p>
     </div>
 
@@ -573,7 +573,7 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
             ['FedRAMP', '✗ None', '✓ High (March 2026)', '✗ None'],
             ['Session Mgmt', '✓ RDM (strongest)', '✓ KCM (Guacamole)', '⚠ Basic only'],
             ['DevOps/NHI', '⚠ REST API only', '✓ KSM 40+ integrations', '✗ REST API only'],
-            ['Cisco Network Gear', '⚠ Custom scripts', '⚠ Custom Gateway scripts', '✗ Very limited'],
+            ['Network Gear (IOS/NX-OS/ASA)', '⚠ Custom scripts', '⚠ Custom Gateway scripts', '✗ Very limited'],
             ['Scale at 250K', '⚠ Validate needed', '⚠ HA Gateway cluster', '✗ Untested'],
             ['Permission Loss', '22→Vault roles', '22→4 axes', '22→3 levels (most loss)'],
             ['Audit Continuity', '✗ Manual export', '✗ Manual export', '✗ Manual export'],
@@ -593,7 +593,7 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
   _guideSection('&#x1F512; Separation of Duties — iOPEX as Migration Integrator', `
     <p style="margin-bottom:14px;font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
       iOPEX operates as the migration integrator throughout all phases — building, operating, and running the
-      15-agent orchestration platform. Cisco retains accountability for every approval gate.
+      15-agent orchestration platform. The Enterprise client retains accountability for every approval gate.
       The core principle is simple: <strong>the team that performs the work cannot also sign off on it.</strong>
       This is enforced mechanically through Agent 08 gate logic and is visible on every gate card in the Gate Tracker tab.
     </p>
@@ -602,13 +602,13 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
 
     <div style="display:grid;gap:8px;margin-bottom:20px;">
       ${[
-        ['1', 'var(--purple)', 'iOPEX Runs — Cisco Approves Every Gate',
-         'iOPEX Migration Engineers execute all agent runs, ETL waves, and deliverable production. No gate in the program can be approved by iOPEX. Every gate requires a named Cisco approver who is independent of the team that performed the work. This applies from g1 (Kick-off) through g14 (Final Sign-off).',
-         'Agent 08 enforces this mechanically — a gate cannot reach APPROVED status without the required Cisco approver roles signing off.'],
+        ['1', 'var(--purple)', 'iOPEX Runs — Enterprise Client Approves Every Gate',
+         'iOPEX Migration Engineers execute all agent runs, ETL waves, and deliverable production. No gate in the program can be approved by iOPEX. Every gate requires a named Enterprise approver who is independent of the team that performed the work. This applies from g1 (Kick-off) through g14 (Final Sign-off).',
+         'Agent 08 enforces this mechanically — a gate cannot reach APPROVED status without the required Enterprise approver roles signing off.'],
 
-        ['2', 'var(--red)', 'Permission Mapping Approval is Cisco Security Only (PCI-DSS 7.1)',
-         'Agent 03 produces the permission escalation and loss report. iOPEX has zero approval authority over this output. Cisco Security Architect must independently review every escalation flag before Phase 3 proceeds. This is a PCI-DSS Requirement 7.1 dual-control: the team that performs a control cannot also approve it.',
-         'Gate g5 (Structure Approval) hard-blocks Phase 4 until Cisco Security sign-off is recorded. No delegation to iOPEX is permitted under any circumstances.'],
+        ['2', 'var(--red)', 'Permission Mapping Approval is Enterprise Security Only (PCI-DSS 7.1)',
+         'Agent 03 produces the permission escalation and loss report. iOPEX has zero approval authority over this output. Enterprise Security Architect must independently review every escalation flag before Phase 3 proceeds. This is a PCI-DSS Requirement 7.1 dual-control: the team that performs a control cannot also approve it.',
+         'Gate g5 (Structure Approval) hard-blocks Phase 4 until Enterprise Security sign-off is recorded. No delegation to iOPEX is permitted under any circumstances.'],
 
         ['3', 'var(--amber)', 'NHI Ownership Can Only Be Declared by App Owners',
          'iOPEX agents classify non-human identities using platform signals, name patterns, and safe name patterns. AI confidence scores are indicators, not declarations. Only the application team that owns the workload can confirm that a service account belongs to them and that its dependency chains are complete.',
@@ -619,11 +619,11 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
          'Pilot gate g6 is a hard block on all production waves. App Owners must physically verify access in the target. iOPEX heartbeat results are necessary but not sufficient.'],
 
         ['5', 'var(--red)', 'SOX Dual-Control on NHI Rotation Certification (Wave 3)',
-         'Wave 3 migrates 554 NHI accounts and configures rotation policies in the target. The team that configures a control (iOPEX setting rotation policies) cannot also certify that the control is operating correctly. Cisco Compliance must independently verify rotation policies are active at gate g9.',
+         'Wave 3 migrates 554 NHI accounts and configures rotation policies in the target. The team that configures a control (iOPEX setting rotation policies) cannot also certify that the control is operating correctly. Enterprise Compliance must independently verify rotation policies are active at gate g9.',
          'SOX Section 404 requires dual-control for credential management operations. Gate g9 requires Compliance sign-off in addition to App Owner confirmation. iOPEX cannot satisfy both roles.'],
 
-        ['6', 'var(--red)', 'Point-of-No-Return (g13) Requires Maximum Cisco Authority — iOPEX Has Zero Approval Power',
-         'Gate g13 (Cutover Approval) sets the source CyberArk vault to read-only — the last reversible step before decommission. iOPEX presents the evidence: parallel-run metrics, final validation report, all App Owner sign-offs, and compliance packages. iOPEX then waits. All three independent Cisco approvers (CAB, Exec Sponsor, Compliance) must authorize before iOPEX executes the read-only switch.',
+        ['6', 'var(--red)', 'Point-of-No-Return (g13) Requires Maximum Enterprise Authority — iOPEX Has Zero Approval Power',
+         'Gate g13 (Cutover Approval) sets the source CyberArk vault to read-only — the last reversible step before decommission. iOPEX presents the evidence: parallel-run metrics, final validation report, all App Owner sign-offs, and compliance packages. iOPEX then waits. All three independent Enterprise approvers (CAB, Exec Sponsor, Compliance) must authorize before iOPEX executes the read-only switch.',
          'This is the highest-authority gate in the program. If any approver is unavailable or withholds approval, the migration pauses. iOPEX cannot proceed based on partial approvals or verbal authorization.'],
 
       ].map(([num, color, title, body, enforcement]) => `
@@ -638,15 +638,15 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
       `).join('')}
     </div>
 
-    <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">RACI Summary — iOPEX vs Cisco by Activity</div>
+    <div style="font-size:0.65rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">RACI Summary — iOPEX vs Enterprise Client by Activity</div>
     <div style="overflow-x:auto;margin-bottom:10px;">
       <table style="width:100%;border-collapse:collapse;font-size:0.64rem;">
         <thead>
           <tr style="border-bottom:1px solid var(--border);">
             <th style="padding:6px 10px;text-align:left;color:var(--text-muted);">Activity</th>
             <th style="padding:6px 10px;text-align:center;color:var(--cyan);">iOPEX</th>
-            <th style="padding:6px 10px;text-align:center;color:var(--green);">Cisco Accountable</th>
-            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);">Cisco Team</th>
+            <th style="padding:6px 10px;text-align:center;color:var(--green);">Enterprise Accountable</th>
+            <th style="padding:6px 10px;text-align:left;color:var(--text-muted);">Enterprise Team</th>
           </tr>
         </thead>
         <tbody>
@@ -680,7 +680,7 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
 
   _guideSection('&#x1F9E9; Hybrid PAM Architecture — Full Coverage Model', `
     <p style="margin-bottom:14px;font-size:0.72rem;color:var(--text-standard);line-height:1.7;">
-      No single front-runner covers 100% of Cisco's PAM requirements at enterprise scale. The recommended posture is a
+      No single front-runner covers 100% of enterprise PAM requirements at enterprise scale. The recommended posture is a
       <strong>layered hybrid</strong>: Keeper as the primary secrets vault and DevOps core, Devolutions RDM as the
       session management layer for on-prem/hybrid infrastructure, and MiniOrange as the identity and MFA front-door.
       Together, they close every gap left open by each individual vendor.
@@ -718,7 +718,7 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
           <li>SSO / SAML / OIDC brokering</li>
           <li>Identity governance &amp; access review</li>
           <li>Step-up auth for high-risk vaults</li>
-          <li>Cisco Duo / AD / LDAP integration</li>
+          <li>Enterprise SSO / AD / LDAP integration</li>
           <li>Risk-based adaptive authentication</li>
           <li>Access request &amp; approval workflow</li>
         </ul>
@@ -743,7 +743,7 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
             ['Password Rotation',                 '✓ Gateway',       '✓ RDM Agent',    '⚠ Basic',          '✓ FULL'],
             ['Session Recording',                 '✓ KCM',           '✓ RDM',          '✗',                '✓ FULL'],
             ['RDP / SSH / VNC Access',            '⚠ KCM (browser)', '✓ Native RDM',   '✗',                '✓ FULL'],
-            ['Cisco Network Device Access',       '⚠ Custom scripts','✓ Telnet/SSH/CLI','✗',                '✓ FULL'],
+            ['Network Device Access (IOS/NX-OS/ASA)',       '⚠ Custom scripts','✓ Telnet/SSH/CLI','✗',                '✓ FULL'],
             ['DevOps / NHI Secrets (CI/CD)',      '✓ KSM 40+',       '⚠ REST only',    '✗',                '✓ FULL'],
             ['Cloud IAM (AWS/Azure/GCP)',          '✓ Native',        '⚠ Entry type',   '⚠ SSO only',       '✓ FULL'],
             ['MFA / Step-up Authentication',      '✓ Built-in',      '⚠ Basic',        '✓ Primary',        '✓ FULL'],
@@ -815,7 +815,7 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
           Docker container (4 CPU / 16 GB) running in a network segment with line-of-sight to all managed systems
           (Windows DCs, Unix hosts, Oracle/MSSQL servers, Cisco IOS devices). Without Gateway, rotation and heartbeat
           calls never reach targets — migration appears to succeed but credentials are unverified.
-          At Cisco 250K+ scale: minimum 2-node HA cluster behind a load balancer.
+          At enterprise 250K+ scale: minimum 2-node HA cluster behind a load balancer.
         </div>
         <div>
           <strong style="color:var(--cyan)">2. CyberArk PVWA service account credentialed</strong><br>
@@ -895,7 +895,7 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
       accounts. They require the same CI/CD discipline as any critical infrastructure code — automated testing on every
       commit, config validation before deployment, and a promotion gate before any changes reach the migration environment.
       <br><br>
-      <strong>The CI/CD tooling is a decision point</strong> — Cisco will likely have an existing standard (GitHub Enterprise,
+      <strong>The CI/CD tooling is a decision point</strong> — The Enterprise client will likely have an existing standard (GitHub Enterprise,
       Jenkins, GitLab CI, or Azure DevOps). The tool choice does not change the pipeline stages or testing requirements.
       What follows is tool-agnostic: the procedure is the standard regardless of platform.
     </p>
@@ -913,10 +913,10 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
         </thead>
         <tbody>
           ${[
-            ['GitHub Actions',   'Code repo is on GitHub Enterprise',                        'Runners must be self-hosted in Cisco network to reach PVWA + Keeper Gateway. No public runner can touch migration env.', 'KSM native action'],
-            ['Jenkins',          'Cisco already runs Jenkins for infrastructure automation',  'Existing pipeline library, agent pools, and LDAP auth reuse. Most common in enterprise PAM environments.', 'Keeper plugin or env vars'],
+            ['GitHub Actions',   'Code repo is on GitHub Enterprise',                        'Runners must be self-hosted in Enterprise network to reach PVWA + Keeper Gateway. No public runner can touch migration env.', 'KSM native action'],
+            ['Jenkins',          'Enterprise already runs Jenkins for infrastructure automation',  'Existing pipeline library, agent pools, and LDAP auth reuse. Most common in enterprise PAM environments.', 'Keeper plugin or env vars'],
             ['GitLab CI',        'Code repo is on GitLab (self-hosted)',                     'Built-in container registry and environments model maps cleanly to migration phases. Good secrets masking.', 'GitLab Vault integration'],
-            ['Azure DevOps',     'Cisco Microsoft shop — AzDO already managing infra',       'Service connections to Keeper and Devolutions. YAML pipelines with environment approvals match phase gates.', 'Azure Key Vault link'],
+            ['Azure DevOps',     'Enterprise Microsoft shop — AzDO already managing infra',       'Service connections to Keeper and Devolutions. YAML pipelines with environment approvals match phase gates.', 'Azure Key Vault link'],
           ].map((row, i) => `
             <tr style="border-bottom:1px solid var(--border);${i % 2 === 1 ? 'background:var(--bg-surface);' : ''}">
               <td style="padding:5px 10px;font-weight:700;color:var(--cyan)">${row[0]}</td>
@@ -931,7 +931,7 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
     <div class="callout amber" style="margin-bottom:16px;">
       <div class="callout-title" style="color:var(--amber);font-size:0.65rem;">&#x26A0; Non-Negotiable Regardless of Tool</div>
       <p style="font-size:0.68rem;line-height:1.8;margin:0;">
-        CI/CD runners <strong>must run inside Cisco's network</strong> — they need reachable paths to the CyberArk PVWA (source),
+        CI/CD runners <strong>must run inside the Enterprise network</strong> — they need reachable paths to the CyberArk PVWA (source),
         Keeper Gateway (target), and Devolutions Server (target). Public cloud runners cannot be used for any stage
         that touches migration infrastructure. Credentials must <strong>never appear in pipeline logs</strong> — all
         secrets injected via the chosen platform's secret store, not hardcoded in YAML.
@@ -963,7 +963,7 @@ The <strong style="color:var(--teal)">Execution Engine</strong> receives PMO Dir
          'Before any deployment reaches the production migration environment, a named approver (Migration Lead or Security Architect) manually reviews the change and approves in the CI/CD platform. This mirrors the Agent 08 runbook gate model — the pipeline enforces it mechanically. No code reaches the live migration environment without a human sign-off.',
          'Pre-P1 deploy'],
         ['8', 'LOAD &amp; THROUGHPUT TEST', 'var(--cyan)',
-         'Seed mock API with 20,000+ account records. Run ETL pipeline and measure: batch throughput (accounts/min), Keeper Gateway API call rate (must stay under 50 calls/min per vault ceiling), state file write performance, and memory footprint under sustained load. Run before each production wave (P5). Catches Keeper HTTP 403 throttle scenarios and Gateway OOM risk at Cisco scale.',
+         'Seed mock API with 20,000+ account records. Run ETL pipeline and measure: batch throughput (accounts/min), Keeper Gateway API call rate (must stay under 50 calls/min per vault ceiling), state file write performance, and memory footprint under sustained load. Run before each production wave (P5). Catches Keeper HTTP 403 throttle scenarios and Gateway OOM risk at enterprise scale.',
          'Pre-P5 waves'],
         ['9', 'ROLLBACK TEST', 'var(--red)',
          'Inject a simulated mid-pipeline failure (kill coordinator process at step 4 of 7). Verify: watchdog timer fires within 120 min, all frozen accounts are unfrozen, state file is recoverable, coordinator resumes correctly from last checkpoint on restart. Must pass before production waves. This is the safety net — validate it works before you need it.',

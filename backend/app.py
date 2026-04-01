@@ -16,7 +16,7 @@ from backend.mock_data import PHASES, AGENTS, WAVES, GATES, OPTIONS, DELIVERABLE
 app = FastAPI(
     title="PAM Migration Control Center",
     version="1.0.0",
-    description="Interactive control center for PAM migration journey (Cisco: Devolutions 44w / Keeper 36w / MiniOrange 32w)",
+    description="Interactive control center for CyberArk PAS → KeeperPAM migration journey (80-week enterprise engagement)",
 )
 
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
